@@ -1,0 +1,136 @@
+name: debuga_o_mascote
+description: "A new Flutter project."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+# The following defines the version and build number for your application.
+# A version number is three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+# In Android, build-name is used as versionName while build-number used as versionCode.
+# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
+# Read more about iOS versioning at
+# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+# In Windows, build-name is used as the major, minor, and patch parts
+# of the product and file versions while build-number is used as the build suffix.
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.3
+
+# Dependencies specify other packages that your package needs in order to work.
+# To automatically upgrade your package dependencies to the latest versions
+# consider running `flutter pub upgrade --major-versions`. Alternatively,
+# dependencies can be manually updated by changing the version numbers below to
+# the latest version available on pub.dev. To see which dependencies have newer
+# versions available, run `flutter pub outdated`.
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # The following adds the Cupertino Icons font to your application.
+  # Use with the CupertinoIcons class for iOS style icons.
+  cupertino_icons: ^1.0.8
+
+  # Nunito (design typography) and the design's inline SVG icons.
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.0.10+1
+
+  # Efeitos sonoros (lib/audio/) — ver .claude/memory/decisions.md.
+  audioplayers: ^6.1.0
+
+  # Placar do Dia local (lib/data/) — ver .claude/memory/decisions.md.
+  shared_preferences: ^2.5.5
+
+  # Placar do Dia via Firebase (lib/data/): login anônimo por dispositivo +
+  # Firestore — ver .claude/memory/decisions.md.
+  firebase_core: ^4.14.0
+  firebase_auth: ^6.6.1
+  cloud_firestore: ^6.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # The "flutter_lints" package below contains a set of recommended lints to
+  # encourage good coding practices. The lint set provided by the package is
+  # activated in the `analysis_options.yaml` file located at the root of your
+  # package. See that file for information about deactivating specific lint
+  # rules and activating additional ones.
+  flutter_lints: ^6.0.0
+
+# `firebase_core_web` 3.11.0 usa `e.isA<JSObject>()` (Object.isA só existe a
+# partir do Dart 3.12; este projeto está no Dart 3.11.3) — quebra a compilação
+# web ("The method 'isA' isn't defined for the type 'Object'"). Bug real do
+# pacote (flutterfire#18611), já corrigido no repositório (PR #18612), mas
+# ainda sem release publicado no pub.dev nesta data. Fixado na versão anterior
+# (sem o bug) até sair uma versão nova — ver .claude/memory/decisions.md.
+dependency_overrides:
+  firebase_core_web: 3.10.0
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter packages.
+flutter:
+
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
+
+  # To add assets to your application, add an assets section, like this:
+  assets:
+    - assets/images/mascot.png
+    # TODO: só uma expressão (neutro) por enquanto — ver
+    # .claude/memory/decisions.md sobre expressões futuras (comemorando/confuso).
+    - assets/images/world1_icon.png
+    - assets/images/world2_icon.png
+    - assets/images/world3_icon.png
+    # Ícones ilustrados dos 3 mundos (Seleção de Mundo) — gerados por IA a
+    # partir de prompt do usuário, ver .claude/memory/decisions.md.
+    - assets/images/leaderboard_bee.png
+    # Personagem abelha (amarelo/roxo, gerado por IA) usado na tela do
+    # Placar do Dia — ver .claude/memory/decisions.md.
+    - assets/images/mascot_tutorial.png
+    # Mascote de olhos abertos, usado só na TutorialScreen — gerado por IA,
+    # ver .claude/memory/decisions.md.
+    - assets/audio/tutorial/
+    # Narração gravada por slide do tutorial (TutorialScreen) — gerada por
+    # tool/generate_tutorial_narration.py, ver .claude/memory/decisions.md.
+    - assets/audio/walk.wav
+    - assets/audio/turn.wav
+    - assets/audio/play.wav
+    - assets/audio/victory.wav
+    - assets/audio/failure.wav
+    # SFX sintetizados por tool/generate_sfx.py (placeholder) — ver
+    # .claude/memory/decisions.md.
+
+  # An image asset can refer to one or more resolution-specific "variants", see
+  # https://flutter.dev/to/resolution-aware-images
+
+  # For details regarding adding assets from package dependencies, see
+  # https://flutter.dev/to/asset-from-package
+
+  # To add custom fonts to your application, add a fonts section here,
+  # in this "flutter" section. Each entry in this list should have a
+  # "family" key with the font family name, and a "fonts" key with a
+  # list giving the asset and other descriptors for the font. For
+  # example:
+  # fonts:
+  #   - family: Schyler
+  #     fonts:
+  #       - asset: fonts/Schyler-Regular.ttf
+  #       - asset: fonts/Schyler-Italic.ttf
+  #         style: italic
+  #   - family: Trajan Pro
+  #     fonts:
+  #       - asset: fonts/TrajanPro.ttf
+  #       - asset: fonts/TrajanPro_Bold.ttf
+  #         weight: 700
+  #
+  # For details regarding fonts from package dependencies,
+  # see https://flutter.dev/to/font-from-package

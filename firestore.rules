@@ -1,0 +1,25 @@
+rules_version = '2';
+
+// Regras do Placar do Dia (lib/data/firebase_leaderboard_repository.dart) e
+// do perfil/progresso por jogador (lib/data/progress_sync.dart). Ver
+// .claude/memory/decisions.md para o desenho de dados (players/{uid},
+// scores) e o porquê de idade/"já programou antes" nunca serem lidas
+// publicamente pelo app (só o organizador olha via console).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Perfil + progresso do jogador (anônimo ou cadastrado) — só o próprio
+    // dono (UID) lê e escreve o seu documento. Ninguém mais lê (nem o
+    // ranking público, que usa só `scores` abaixo).
+    match /players/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Histórico de envios — leitura pública (é o ranking), criação só pelo
+    // próprio dono, imutável depois de criado.
+    match /scores/{scoreId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+  }
+}

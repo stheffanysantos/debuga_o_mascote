@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "823859588989",
+    "project_id": "debugaomascote",
+    "storage_bucket": "debugaomascote.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:823859588989:android:1599d544e0590e2cb56614",
+        "android_client_info": {
+          "package_name": "com.example.debuga_o_mascote"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "823859588989-b2idfu82dr00p3qlbp7op6vrr6cdri5d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.debuga_o_mascote",
+            "certificate_hash": "4f8501ed425e50b938250f6e8112f8a9d1d1033b"
+          }
+        },
+        {
+          "client_id": "823859588989-7hn5f94v96l4vguumue1db4oopm64176.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDmaGxbr_BzlGfzav1uxr3YlTDDYZSPi_c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "823859588989-7hn5f94v96l4vguumue1db4oopm64176.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "823859588989-id8d3221aim3gaq2mijikmvriisisi49.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.debugaOMascote"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

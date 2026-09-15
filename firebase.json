@@ -1,0 +1,26 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "debugaomascote",
+          "appId": "1:823859588989:android:1599d544e0590e2cb56614",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "debugaomascote",
+          "configurations": {
+            "android": "1:823859588989:android:1599d544e0590e2cb56614",
+            "ios": "1:823859588989:ios:f0fbd113a98f3ed9b56614",
+            "web": "1:823859588989:web:d29bdad072f04ae4b56614"
+          }
+        }
+      }
+    }
+  }
+}
