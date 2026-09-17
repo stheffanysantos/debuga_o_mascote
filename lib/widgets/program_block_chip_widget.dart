@@ -28,7 +28,7 @@ class ProgramBlockChip extends StatelessWidget {
   Widget build(BuildContext context) {
     // Teto de largura + `label` dentro de `Flexible` (quebra linha em vez
     // de estourar) — sem isso, rótulos curtos (Mundo 1/2: "Andar") sempre
-    // couberam, mas o Mundo 3 reaproveita este chip para uma linha de
+    // couberam, mas o Mundo 5 reaproveita este chip para uma linha de
     // código inteira ("for (int i = 0; i < 3; i++) {"), que sem limite
     // algum estourava o `Wrap` pai (achado do Code Reviewer). Não usa
     // `TextOverflow.ellipsis`/`FittedBox` de propósito — truncar ou

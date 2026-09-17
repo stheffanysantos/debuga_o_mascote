@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:debuga_o_mascote/core/onboarding/onboarding_notifier.dart';
+import 'package:debuga_o_mascote/features/code_puzzle/presentation/stage_select/stage_select_view.dart';
+import 'package:debuga_o_mascote/features/complete_code/presentation/stage_select/stage_select_view.dart';
+import 'package:debuga_o_mascote/features/conveyor/presentation/stage_select/stage_select_view.dart';
+import 'package:debuga_o_mascote/features/maze/presentation/stage_select/stage_select_view.dart';
+import 'package:debuga_o_mascote/features/predict_output/presentation/stage_select/stage_select_view.dart';
 import 'package:debuga_o_mascote/models/level.dart';
-import 'package:debuga_o_mascote/models/onboarding.dart';
-import 'package:debuga_o_mascote/models/progress.dart';
-import 'package:debuga_o_mascote/screens/code_puzzle_stage_select_screen.dart';
-import 'package:debuga_o_mascote/screens/conveyor_stage_select_screen.dart';
-import 'package:debuga_o_mascote/screens/level_select_screen.dart';
-import 'package:debuga_o_mascote/screens/world_select_screen.dart';
+import 'package:debuga_o_mascote/features/world_select/presentation/world_select_view.dart';
+
+import '../helpers/test_container.dart';
 
 /// Ver `.claude/plans/Mundos.md` (Etapa 1) e
 /// `.claude/docs/NAVIGATION_FLOW.md`. Mesmo estilo de interação real usado
@@ -15,9 +19,9 @@ import 'package:debuga_o_mascote/screens/world_select_screen.dart';
 ///
 /// Estes testes cobrem a Seleção de Mundo em si (grade compacta, navegação
 /// por `GameWorld`). O fluxo do `TutorialModal` na 1ª vez que um mundo é
-/// tocado (ver `Onboarding`, `lib/models/onboarding.dart`) tem seus próprios
+/// tocado (ver `Onboarding`, `lib/core/onboarding/`) tem seus próprios
 /// testes em `test/screens/tutorial_flow_test.dart` — aqui, cada mundo
-/// tocado já é marcado como visto de antemão (`Onboarding.instance.markSeen`)
+/// tocado já é marcado como visto de antemão (`onboardingNotifierProvider.notifier.markSeen`)
 /// para testar só a navegação, sem o modal no meio do caminho.
 void main() {
   // O mapa (`_WorldMapPath`) é mais alto que qualquer viewport de celular
@@ -25,39 +29,41 @@ void main() {
   // dentro do `SingleChildScrollView` da tela. `ensureVisible` (chamado antes
   // de cada `tap` abaixo) rola até o nó certo em vez de depender de uma
   // superfície de teste grande o bastante pra caber tudo sem rolagem.
-  Future<void> pumpWorldSelect(WidgetTester tester) async {
+  Future<ProviderContainer> pumpWorldSelect(WidgetTester tester, {List<Override> overrides = const []}) async {
     await tester.binding.setSurfaceSize(const Size(400, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.pumpWidget(const MaterialApp(home: WorldSelectScreen()));
+    final container = createTestContainer(overrides: overrides);
+    await tester.pumpWidget(wrapForTest(container, const WorldSelectView()));
     await tester.pump();
+    return container;
   }
 
-  testWidgets('mostra os 3 mundos com nome', (tester) async {
-    Progress.instance.reset();
-    Onboarding.instance.reset();
+  testWidgets('mostra os 5 mundos com nome', (tester) async {
     await pumpWorldSelect(tester);
 
     for (final world in worlds) {
-      expect(find.text('MUNDO ${world.number} / ${world.name.toUpperCase()}'), findsOneWidget);
+      final node = find.text('MUNDO ${world.number} / ${world.name.toUpperCase()}');
+      await tester.ensureVisible(node);
+      await tester.pump();
+      expect(node, findsOneWidget);
     }
   });
 
-  testWidgets('nenhum mundo bloqueado — só o card da Trilha 2 (comingSoon) mostra "EM BREVE"', (tester) async {
-    Progress.instance.reset();
-    Onboarding.instance.reset();
+  testWidgets('nenhum mundo aparece "EM BREVE" — as duas trilhas já têm mundos de verdade', (tester) async {
     await pumpWorldSelect(tester);
 
-    // Os 3 mundos da Trilha 1 já são jogáveis — o único "EM BREVE" na tela é
-    // o badge do card da Trilha 2, que ainda não tem mundos.
-    expect(find.text('EM BREVE'), findsOneWidget);
+    // Trilha 1 (Mundos 1-3) e Trilha 2 (Mundos 4-5) têm conteúdo real —
+    // nenhum badge "EM BREVE" na tela. Mundos além do 1º de cada trilha
+    // ficam bloqueados por progresso, não "comingSoon" — e a flag de debug
+    // (`_debugUnlockAllWorlds`) mantém tudo tocável em teste.
+    expect(find.text('EM BREVE'), findsNothing);
     expect(find.textContaining('TRILHA 2'), findsOneWidget);
   });
 
   testWidgets('tocar o card do Mundo 2 (já visto) navega direto para a Seleção de Fases da Esteira', (tester) async {
-    Progress.instance.reset();
-    Onboarding.instance.reset();
-    Onboarding.instance.markSeen(worlds[1].number);
-    await pumpWorldSelect(tester);
+    final container = await pumpWorldSelect(tester);
+    container.read(onboardingNotifierProvider.notifier).markSeen(worlds[1].number);
+    await tester.pump();
 
     // Não usar pumpAndSettle: o card jogável usa PulseTap, uma animação em
     // loop infinito, que nunca "assenta" (ver `.claude/rules/testing.md`).
@@ -68,15 +74,14 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.byType(ConveyorStageSelectScreen), findsOneWidget);
+    expect(find.byType(ConveyorStageSelectView), findsOneWidget);
     expect(find.text('MUNDO 2'), findsOneWidget);
   });
 
-  testWidgets('tocar o card do Mundo 3 (já visto) navega direto para a Seleção de Fases do Modo Debug', (tester) async {
-    Progress.instance.reset();
-    Onboarding.instance.reset();
-    Onboarding.instance.markSeen(worlds[2].number);
-    await pumpWorldSelect(tester);
+  testWidgets('tocar o card do Mundo 3 (já visto) navega direto para a Seleção de Fases de Preveja a Saída', (tester) async {
+    final container = await pumpWorldSelect(tester);
+    container.read(onboardingNotifierProvider.notifier).markSeen(worlds[2].number);
+    await tester.pump();
 
     final node = find.text('MUNDO 3 / ${worlds[2].name.toUpperCase()}');
     await tester.ensureVisible(node);
@@ -85,15 +90,46 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.byType(CodePuzzleStageSelectScreen), findsOneWidget);
+    expect(find.byType(PredictOutputStageSelectView), findsOneWidget);
     expect(find.text('MUNDO 3'), findsOneWidget);
   });
 
+  testWidgets('tocar o card do Mundo 4 (já visto) navega direto para a Seleção de Fases de Complete o Código', (tester) async {
+    final container = await pumpWorldSelect(tester);
+    container.read(onboardingNotifierProvider.notifier).markSeen(worlds[3].number);
+    await tester.pump();
+
+    final node = find.text('MUNDO 4 / ${worlds[3].name.toUpperCase()}');
+    await tester.ensureVisible(node);
+    await tester.pump();
+    await tester.tap(node);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byType(CompleteCodeStageSelectView), findsOneWidget);
+    expect(find.text('MUNDO 4'), findsOneWidget);
+  });
+
+  testWidgets('tocar o card do Mundo 5 (já visto) navega direto para a Seleção de Fases do Modo Debug', (tester) async {
+    final container = await pumpWorldSelect(tester);
+    container.read(onboardingNotifierProvider.notifier).markSeen(worlds[4].number);
+    await tester.pump();
+
+    final node = find.text('MUNDO 5 / ${worlds[4].name.toUpperCase()}');
+    await tester.ensureVisible(node);
+    await tester.pump();
+    await tester.tap(node);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byType(CodePuzzleStageSelectView), findsOneWidget);
+    expect(find.text('MUNDO 5'), findsOneWidget);
+  });
+
   testWidgets('tocar o card do Mundo 1 (já visto) navega direto para a Seleção de Fases', (tester) async {
-    Progress.instance.reset();
-    Onboarding.instance.reset();
-    Onboarding.instance.markSeen(worlds.first.number);
-    await pumpWorldSelect(tester);
+    final container = await pumpWorldSelect(tester);
+    container.read(onboardingNotifierProvider.notifier).markSeen(worlds.first.number);
+    await tester.pump();
 
     // Não usar pumpAndSettle: o card jogável usa PulseTap, uma animação em
     // loop infinito, que nunca "assenta" (ver `.claude/rules/testing.md` e
@@ -105,7 +141,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.byType(LevelSelectScreen), findsOneWidget);
+    expect(find.byType(StageSelectView), findsOneWidget);
     expect(find.text('MUNDO 1'), findsOneWidget);
   });
 }

@@ -2,7 +2,7 @@
 
 Fonte de verdade das regras do jogo. Qualquer mudança de regra é escrita aqui **antes** de implementada no motor de jogo (`lib/game/`) — ver `.claude/agents/game-logic-engineer.md`.
 
-O jogo tem 3 mundos, cada um um mini-jogo de lógica de programação diferente, com seu próprio motor (`GameWorld`/`WorldGameType`, `lib/models/level.dart`). Este documento descreve as regras do **Mundo 1 — Labirinto**, do **Mundo 2 — Esteira** e do **Mundo 3 — Modo Debug** (os três com motor implementado).
+O jogo tem 5 mundos, cada um um mini-jogo de lógica de programação diferente, com seu próprio motor (`GameWorld`/`WorldGameType`, `lib/models/level.dart`), agrupados em 2 Trilhas (`GameTrack`, `lib/models/game_track.dart`): a Trilha 1 ("Fundamentos") tem os Mundos 1-3; a Trilha 2 ("Avançado") tem os Mundos 4-5. Este documento descreve as regras do **Mundo 1 — Labirinto**, do **Mundo 2 — Esteira**, do **Mundo 3 — Preveja a Saída**, do **Mundo 4 — Complete o Código** e do **Mundo 5 — Modo Debug**.
 
 ## Mundo 1 — Labirinto
 
@@ -99,7 +99,38 @@ Mesma fórmula do Mundo 1 — `lib/game/scoring.dart` (`computeScore`), reaprove
 ### Dica (tela de Tentativa Falha)
 - `ConveyorLevel.hintProgram` guarda uma solução válida conhecida da fase (não necessariamente a ótima) — mesmo papel de `Level.hintProgram` no Mundo 1.
 
-## Mundo 3 — Modo Debug
+## Mundo 3 — Preveja a Saída
+
+Ponte entre o Mundo 2 (Esteira, sem código de verdade) e a Trilha 2 (código de verdade manipulável): sem grid, sem Mascote, sem fila de itens, sem execução passo a passo. Cada fase (`PredictOutputLevel`, `lib/models/predict_output_level.dart`) mostra um trecho de código real, curto e já na ordem certa (nunca embaralhado/editável) — o jogador só **lê** o código e prevê o resultado por múltipla escolha. Mesma família de "veredito único" dos Mundos 4/5 (sem "quase certo").
+
+### Estrutura da fase
+- `code`: o trecho de código, na ordem certa, mostrado só para leitura (com destaque de sintaxe simples, `highlightCodeLine`).
+- `question`: a pergunta sobre o resultado (ex.: "O que aparece na tela?").
+- `options`/`correctOptionIndex`: 2-3 respostas possíveis, uma certa.
+- `explanation`: mostrada sempre (ganhou ou perdeu), explicando por que aquele é o resultado.
+
+### Condição de vitória/derrota
+Binária: `selectedOptionIndex == correctOptionIndex` — Vitória; qualquer outra opção — Falha (tentativa não conta como certa, jogador pode tentar de novo).
+
+### Pontuação e estrelas
+Reaproveita `computeCodePuzzleScore` (mesma fórmula do Mundo 5, ver abaixo) — a métrica de "tentativas até acertar" já é genérica o bastante, sem precisar de um cálculo próprio.
+
+## Mundo 4 — Complete o Código
+
+Continuação do Mundo 3 dentro da Trilha 2 (mais difícil — já manipula código de verdade, não só lê): sem grid, sem Mascote, sem fila de itens. Cada fase (`CompleteCodeLevel`, `lib/models/complete_code_level.dart`) mostra um trecho de código real com **1 linha em branco** (`blankLineIndex`) — o jogador escolhe, por múltipla escolha, qual das `options` (linhas de código candidatas) completa certo. Um degrau mais perto de `reorder`/`findBug` (Mundo 5) do que o Mundo 3, mas ainda por múltipla escolha (não por reordenar/tocar a linha errada).
+
+### Estrutura da fase
+- `code`: o trecho de código completo e correto (a UI não revela `code[blankLineIndex]` antes do jogador responder — mostra um espaço em branco tracejado no lugar, e a prévia da opção escolhida assim que ela é tocada).
+- `options`/`correctOptionIndex`: 2-3 linhas de código candidatas para o espaço em branco.
+- `explanation`: mostrada sempre (ganhou ou perdeu).
+
+### Condição de vitória/derrota
+Binária: `selectedOptionIndex == correctOptionIndex` — Vitória; qualquer outra opção — Falha.
+
+### Pontuação e estrelas
+Reaproveita `computeCodePuzzleScore` (mesma fórmula do Mundo 5, ver abaixo).
+
+## Mundo 5 — Modo Debug
 
 Mini-jogo de lógica diferente dos Mundos 1 e 2: sem grid, sem Mascote, sem fila de itens, sem execução passo a passo. Inspirado no app real Mimo de ensino de código — cada fase (`CodePuzzleLevel`, `lib/models/code_puzzle_level.dart`) é um puzzle de **veredito único**: o jogador confirma uma resposta e ela está certa ou errada, sem meio-termo ("quase certo" não existe aqui, diferente de "usou blocos a mais" nos outros mundos).
 
@@ -141,7 +172,7 @@ Separado do "PONTOS" por fase (`computeScore`/`computeCodePuzzleScore` acima, mo
 Implementado em `lib/game/leaderboard_scoring.dart` (`computeSessionPoints`):
 
 ```
-basePorMundo = { 1: 300, 2: 500, 3: 800 }
+basePorMundo = { 1: 300, 2: 450, 3: 600, 4: 750, 5: 900 }
 bônusPorRapidez = max(0, 200 - segundosGastosNaFase)   // nunca negativo, teto de 200
 pontosDaFase = basePorMundo[mundo] + bônusPorRapidez
 ```

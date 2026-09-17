@@ -14,22 +14,22 @@ O jogador monta uma sequência de comandos (**Programa**) para guiar o **Mascote
 ## 2. Stack Técnica
 
 Ver `.claude/memory/tech-stack.md` para a tabela completa e o porquê de cada escolha. Resumo:
-- Flutter, sem flavors, sem backend.
-- Gerenciamento de estado: `setState` (não GetX/Riverpod — ver `.claude/memory/decisions.md`).
+- Flutter (celular/tablet/web), Firebase (Auth anônimo/email/Google + Firestore) para Placar do Dia e progresso.
+- Gerenciamento de estado: Riverpod 2.x + MVVM + Clean Architecture pragmática (com `riverpod_generator`/`freezed`) — ver `.claude/memory/decisions.md`, entrada de 2026-09-16.
 - Fonte Nunito (Google Fonts), pesos 800/900.
-- Persistência de progresso: a definir (ver `.claude/memory/decisions.md`).
 
 ## 3. Arquitetura
 
 ```
-lib/models/   Level, Block, Program, Progress — Dart puro
-lib/game/     motor de execução (interpretador do Program) — Dart puro
-lib/screens/  as 5 telas (StatefulWidget)
-lib/widgets/  componentes reutilizados por 2+ telas
-lib/theme/    paleta, tipografia, tokens
+lib/models/    Level, Block, LevelProgress, GameTrack — entidades de domínio, Dart puro
+lib/game/      motores de execução por mundo (interpretador do Programa) — Dart puro
+lib/core/      infraestrutura transversal via provider (progress/onboarding/auth/leaderboard/audio)
+lib/widgets/   componentes de Design System reutilizados por 2+ features
+lib/theme/     paleta, tipografia, tokens
+lib/features/  um diretório por mundo/tela, cada um com presentation/{view,view_model,state}
 ```
 
-Regra de dependência: `models/`/`game/` nunca importam Flutter; `screens/`/`widgets/` dependem de `models/`/`game/`/`theme/`, nunca o contrário; nenhuma regra de jogo vive dentro de um `Widget`. Detalhes: `.claude/rules/architecture.md` e `.claude/docs/ARCHITECTURE.md`.
+Regra de dependência: `models/`/`game/` nunca importam Flutter nem Riverpod; `features/`/`widgets/` dependem de `models/`/`game/`/`core/`/`theme/`, nunca o contrário; nenhuma regra de jogo vive dentro de um `Widget`/ViewModel. Detalhes: `.claude/rules/architecture.md` e `.claude/docs/ARCHITECTURE.md`.
 
 ## 4. Estrutura de Diretórios
 
@@ -37,7 +37,7 @@ Ver `.claude/docs/FOLDER_STRUCTURE.md` para a árvore completa de `lib/`.
 
 ## 5. Convenções de Nomenclatura
 
-Ver `.claude/rules/naming.md`. Resumo: arquivos `snake_case.dart` com sufixo por tipo (`_screen.dart`, `_widget.dart`, `_model.dart`, `_test.dart`); classes `PascalCase`.
+Ver `.claude/rules/naming.md`. Resumo: arquivos `snake_case.dart` com sufixo por tipo (`_view.dart`, `_view_model.dart`, `_state.dart`, `_widget.dart`, `_repository.dart`, `_test.dart`); classes `PascalCase`.
 
 ## 6. Design System
 
@@ -73,7 +73,7 @@ Antes de criar um widget ou uma regra de jogo nova, consultar `.claude/memory/de
 
 - Cor/tipografia/espaçamento hardcoded fora de `lib/theme/`.
 - Regra de jogo (colisão, vitória, expansão de `Repetir`) dentro de um `Widget`.
-- `lib/models/` ou `lib/game/` importando `package:flutter/...`.
+- `lib/models/` ou `lib/game/` importando `package:flutter/...` ou `package:flutter_riverpod/...`.
 - GetX, Riverpod, Provider ou qualquer pacote de state management sem antes atualizar `.claude/memory/decisions.md` com o porquê da mudança.
 - Hooks Python/scripts de bloqueio automático em `.claude/settings.json` (decisão deliberada, ver `.claude/memory/decisions.md`) — sem confirmar com o usuário antes.
 

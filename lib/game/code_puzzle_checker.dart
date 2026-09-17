@@ -1,9 +1,9 @@
-import '../models/code_puzzle_level.dart';
+import '../models/code_line.dart';
 
-/// "Motor" do Mundo 3 ("Modo Debug") — mais simples que `ProgramExecutor`
+/// "Motor" do Mundo 5 ("Modo Debug") — mais simples que `ProgramExecutor`
 /// (Mundo 1) e `BeltExecutor` (Mundo 2): não há passo a passo nem cursor,
 /// cada fase é um veredito único por tentativa. Ver
-/// `.claude/docs/GAME_DESIGN.md`, seção "Mundo 3 — Modo Debug".
+/// `.claude/docs/GAME_DESIGN.md`, seção "Mundo 5 — Modo Debug".
 
 /// Compara a sequência montada pelo jogador com a ordem certa da fase,
 /// linha a linha (texto e posição). `true` só se ambas têm o mesmo

@@ -51,6 +51,13 @@ dependencies:
   firebase_auth: ^6.6.1
   cloud_firestore: ^6.9.0
 
+  # Riverpod + MVVM + Clean Architecture (pragmática) — ver
+  # C:\Users\XProcess\.claude\plans\encapsulated-whistling-peach.md e
+  # .claude/memory/decisions.md.
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+  freezed_annotation: ^2.4.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -61,6 +68,13 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+
+  # Geração de código pra Riverpod (@riverpod) e Freezed (@freezed) — rodar
+  # `dart run build_runner build --delete-conflicting-outputs` depois de
+  # qualquer mudança numa classe anotada; ver .claude/rules/git-workflow.md.
+  build_runner: ^2.4.13
+  riverpod_generator: ^2.6.3
+  freezed: ^2.5.7
 
 # `firebase_core_web` 3.11.0 usa `e.isA<JSObject>()` (Object.isA só existe a
 # partir do Dart 3.12; este projeto está no Dart 3.11.3) — quebra a compilação
@@ -90,8 +104,13 @@ flutter:
     - assets/images/world1_icon.png
     - assets/images/world2_icon.png
     - assets/images/world3_icon.png
-    # Ícones ilustrados dos 3 mundos (Seleção de Mundo) — gerados por IA a
-    # partir de prompt do usuário, ver .claude/memory/decisions.md.
+    - assets/images/world4_icon.png
+    - assets/images/world5_icon.png
+    # Ícones ilustrados dos 5 mundos (Seleção de Mundo). Mundos 1/2/5 gerados
+    # por IA a partir de prompt do usuário; Mundos 3/4 (novos) são
+    # placeholders geométricos simples (mesmo espírito do mascote
+    # placeholder original) até uma arte ilustrada de verdade ser gerada —
+    # ver .claude/memory/decisions.md.
     - assets/images/leaderboard_bee.png
     # Personagem abelha (amarelo/roxo, gerado por IA) usado na tela do
     # Placar do Dia — ver .claude/memory/decisions.md.

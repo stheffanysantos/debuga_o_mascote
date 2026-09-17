@@ -1,4 +1,4 @@
-import 'package:debuga_o_mascote/data/auth_service.dart';
+import 'package:debuga_o_mascote/core/auth/auth_service.dart';
 
 /// [AuthService] de teste — nunca toca o Firebase Auth de verdade, e deixa
 /// o teste controlar o resultado de cada chamada (mesmo espírito de
@@ -41,5 +41,11 @@ class FakeAuthService implements AuthService {
     _hasAccount = true;
     _displayName = 'Conta Google';
     return null;
+  }
+
+  @override
+  Future<void> signOut() async {
+    _hasAccount = false;
+    _displayName = null;
   }
 }

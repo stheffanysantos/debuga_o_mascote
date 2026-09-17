@@ -8,4 +8,5 @@ Projeto pequeno, sem hooks automáticos (ver `.claude/memory/decisions.md`) — 
 
 ## Antes de commitar
 - Rodar `flutter analyze` e `flutter test` — sem hook bloqueando, então isso é responsabilidade de quem commita (ou do agente **Code Reviewer**, ver `.claude/agents/code-reviewer.md`).
+- Se alguma classe `@riverpod`/`@freezed` mudou (qualquer `_view_model.dart`, `_state.dart`, `_notifier.dart`), rodar `dart run build_runner build --delete-conflicting-outputs` **antes** de rodar `flutter analyze`/`flutter test` e comitar os arquivos gerados (`*.g.dart`, `*.freezed.dart`) junto — eles ficam versionados no repositório (decisão pragmática pra time pequeno sem CI: `git pull` já compila sem precisar lembrar de rodar codegen, ver `.claude/memory/decisions.md`).
 - Conferir `.claude/reviews/code-review-checklist.md` para mudanças de tela/widget.

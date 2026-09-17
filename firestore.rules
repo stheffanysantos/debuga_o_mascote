@@ -14,12 +14,15 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
 
-    // Histórico de envios — leitura pública (é o ranking), criação só pelo
-    // próprio dono, imutável depois de criado.
-    match /scores/{scoreId} {
+    // Placar Geral — 1 documento por jogador (chave = próprio UID, não um
+    // ID automático), atualizado a cada vitória (`LeaderboardSyncService`).
+    // Leitura pública (é o ranking), escrita só pelo próprio dono. Sem
+    // recorte de dia — pedido explícito do usuário, ver
+    // `.claude/memory/decisions.md`.
+    match /scores/{uid} {
       allow read: if true;
-      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
-      allow update, delete: if false;
+      allow create, update: if request.auth != null && request.auth.uid == uid && request.resource.data.uid == uid;
+      allow delete: if false;
     }
   }
 }

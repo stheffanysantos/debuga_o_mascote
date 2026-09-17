@@ -3,7 +3,7 @@
 /// `.claude/docs/GAME_DESIGN.md`, seção "Placar do Dia — pontuação de
 /// sessão". O tempo gasto nunca aparece na UI — só entra aqui, como um
 /// bônus escondido dentro do total de pontos.
-const _basePointsByWorld = {1: 300, 2: 500, 3: 800};
+const _basePointsByWorld = {1: 300, 2: 450, 3: 600, 4: 750, 5: 900};
 
 const _speedBonusCap = 200;
 

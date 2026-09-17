@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:debuga_o_mascote/data/app_auth.dart';
-import 'package:debuga_o_mascote/screens/register_screen.dart';
+import 'package:debuga_o_mascote/core/auth/auth_providers.dart';
+import 'package:debuga_o_mascote/features/auth/presentation/register/register_view.dart';
 
 import '../helpers/fake_auth_service.dart';
+import '../helpers/test_container.dart';
 
-/// `RegisterScreen` — cadastro/login (nome/email/senha) + Google, via
-/// `AppAuth.instance` (fake injetado, sem tocar o Firebase Auth real). Ver
-/// `.claude/memory/decisions.md`.
+/// `RegisterView` — cadastro/login (nome/email/senha) + Google, via
+/// `authServiceProvider` (fake injetado, sem tocar o Firebase Auth real).
+/// Ver `.claude/memory/decisions.md`.
 void main() {
   late FakeAuthService fakeAuth;
 
   setUp(() => fakeAuth = FakeAuthService());
-  tearDown(() => AppAuth.instance.resetForTest());
 
   Future<void> pumpRegister(WidgetTester tester, {bool mandatory = false, VoidCallback? onDone}) async {
-    AppAuth.instance.service = fakeAuth;
-    await tester.pumpWidget(MaterialApp(home: RegisterScreen(mandatory: mandatory, onDone: onDone ?? () {})));
+    final container = createTestContainer(overrides: [authServiceProvider.overrideWithValue(fakeAuth)]);
+    await tester.pumpWidget(wrapForTest(container, RegisterView(mandatory: mandatory, onDone: onDone ?? () {})));
     await tester.pump();
   }
 
@@ -41,7 +41,7 @@ void main() {
     await pumpRegister(tester);
 
     // Campos vazios — `PrimaryPillButton` desabilitado, o toque não chama
-    // `AppAuth`/muda estado nenhum.
+    // `AuthService`/muda estado nenhum.
     await tester.tap(find.text('Criar conta'));
     await tester.pump();
     expect(fakeAuth.hasAccount, isFalse);

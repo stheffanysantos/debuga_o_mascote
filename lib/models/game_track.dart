@@ -1,5 +1,4 @@
 import 'level.dart';
-import 'progress.dart';
 
 /// Uma Trilha agrupa ~3 Mundos, no estilo "seções" de apps de fases
 /// (ex. Duolingo) — exibida como mapa em zigue-zague, um nível acima da
@@ -7,7 +6,7 @@ import 'progress.dart';
 class GameTrack {
   final int number;
 
-  /// Título grande mostrado na Seleção de Trilha (ex.: "Fundamentos").
+  /// Título grande mostrado na Seleção de Trilha (ex.: "Lógica em Apuros").
   final String name;
 
   /// Frase curta descrevendo a trilha, mostrada abaixo do título.
@@ -28,30 +27,26 @@ class GameTrack {
   });
 }
 
-/// A Trilha 1 reaproveita os 3 Mundos já existentes (`worlds`,
-/// `lib/models/level.dart`) sem nenhuma mudança de conteúdo — só a
-/// reestruturação de "3 mundos soltos" pra "3 mundos dentro de uma trilha".
-/// Trilhas futuras entram aqui como `comingSoon: true`, sem mundos ainda
-/// (mesmo padrão já usado por `GameWorld.comingSoon`).
+/// A Trilha 1 tem os Mundos 1, 2 e 3 (sequência, decisão e leitura de
+/// código — "Preveja a Saída" é a ponte antes da Trilha 2, pedido explícito
+/// do usuário); a Trilha 2 tem os Mundos 4 e 5 ("Complete o Código" e "Modo
+/// Debug", ambos manipulando código de verdade). Ver
+/// `.claude/memory/decisions.md`. Trilhas futuras sem mundos ainda entram
+/// como `comingSoon: true`, `worlds: []` (mesmo padrão já usado por
+/// `GameWorld.comingSoon`).
 final tracks = <GameTrack>[
   GameTrack(
     number: 1,
-    name: 'Fundamentos',
+    name: 'Lógica em Apuros',
     subtitle: 'Sequência, decisão e leitura de código',
     comingSoon: false,
-    worlds: worlds,
+    worlds: [worlds[0], worlds[1], worlds[2]],
   ),
-  const GameTrack(
+  GameTrack(
     number: 2,
-    name: 'Em breve',
-    subtitle: 'Novos desafios chegando',
-    comingSoon: true,
-    worlds: [],
+    name: 'Modo Programador',
+    subtitle: 'Complete e depure código de verdade',
+    comingSoon: false,
+    worlds: [worlds[3], worlds[4]],
   ),
 ];
-
-/// Trilha inteira completa — todos os seus Mundos com 100% das fases
-/// concluídas. Usado para saber quando exigir cadastro (ver
-/// `.claude/memory/decisions.md`).
-bool isTrackCompleted(GameTrack track) =>
-    track.worlds.every((w) => Progress.instance.isWorldCompleted(w.levels.map((l) => l.id)));

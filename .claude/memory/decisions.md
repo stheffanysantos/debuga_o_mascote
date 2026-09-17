@@ -6,7 +6,9 @@ Log curto de decisões arquiteturais (ADR). Toda decisão que contradiga ou subs
 
 ## 2026-09-04 — `setState` em vez de GetX/Riverpod
 
-**Decisão:** o app usa `StatefulWidget`/`setState` puro (sem pacote de state management), com a lógica de jogo isolada em `lib/game/` (motor de execução, sem Flutter/UI).
+**⚠️ Superada em 2026-09-16** — ver a entrada "Migração para Riverpod + MVVM + Clean Architecture (pragmática)" mais abaixo. O app não usa mais `setState` puro para estado de tela/transversal; a arquitetura atual é Riverpod + MVVM. Entrada mantida como histórico do raciocínio original (e do próprio gatilho de reavaliação, que se confirmou).
+
+**Decisão (histórica):** o app usa `StatefulWidget`/`setState` puro (sem pacote de state management), com a lógica de jogo isolada em `lib/game/` (motor de execução, sem Flutter/UI).
 
 **Por quê:** o projeto de referência da empresa (`xp_servico`) usa GetX + Clean Architecture em 3 camadas, mas isso serve um app grande, offline-first, com equipe e ciclo de vida longo. O Debuga o Mascote é um mini-jogo standalone de estande, com 5 telas e uma única fonte de estado por tela — a complexidade de GetX/Clean Architecture não se paga aqui.
 
@@ -614,6 +616,22 @@ Sem esses 2 passos, `FirebaseDeviceIdentity.currentUserId()`/`FirebaseLeaderboar
 
 ---
 
+## 2026-09-15 — Mundo 3 muda de Trilha: sai da Trilha 1, vai sozinho pra Trilha 2
+
+**Decisão:** pedido explícito do usuário — o Mundo 3 ("Modo Debug") é o mais complexo dos três (já lida com código de verdade, não só sequência/decisão visual), então deixou de ficar na Trilha 1 junto dos Mundos 1/2 e passou a ser o único mundo da Trilha 2. Em `lib/models/game_track.dart`: `tracks[0]` ("Fundamentos", subtítulo atualizado de "Sequência, decisão e leitura de código" pra "Sequência e decisão") agora tem `worlds: [worlds[0], worlds[1]]`; `tracks[1]` deixou de ser o placeholder "Em breve"/`comingSoon: true` e virou "Avançado" ("Leitura e depuração de código real"), `comingSoon: false`, `worlds: [worlds[2]]`. A lista global `worlds` (`lib/models/level.dart`) **não muda** — continua com os 3 `GameWorld` na mesma ordem/numeração (`number: 3` para o Modo Debug), porque `GameplayScreen`/`ConveyorGameplayScreen`/`CodePuzzleGameplayScreen` resolvem "o mundo desta fase"/"próxima fase" via `worlds.firstWhere((w) => w.number == _level.world)`, independente de trilha.
+
+**Efeito em cascata, sem precisar mudar código de gameplay:** o gate de cadastro obrigatório (ver entrada "Cadastro real" acima) já era escrito de forma genérica — `_level.world == tracks.first.worlds.last.number`, nos 3 `_returnToLevelSelect`/`isEndOfTrack1` — então passou a disparar sozinho ao terminar o **Mundo 2** (novo último mundo de `tracks.first`), não mais o Mundo 3. Nenhuma linha dos 3 Gameplay screens precisou mudar.
+
+**Nova trava: 1º mundo de uma trilha N>1 exige a trilha anterior 100% completa.** Antes desta mudança, `_isWorldUnlocked` (`world_select_screen.dart`) só olhava o mundo anterior *na mesma trilha* — o 1º mundo de qualquer trilha estava sempre liberado. Como agora existe uma 2ª trilha com conteúdo de verdade, isso deixaria o Mundo 3 jogável a qualquer momento, sem completar a Trilha 1 — contradiz o próprio motivo da mudança (Mundo 3 é o mais difícil, deveria vir depois). Estendida a mesma regra sequencial um nível acima: quando `index <= 0` (1º mundo da trilha), desbloqueia se `trackIndex <= 0` (1ª trilha) ou se `isTrackCompleted(tracks[trackIndex - 1])` — reaproveita `isTrackCompleted` (já existia, usado só pelo gate de cadastro até então) e respeita a mesma flag de debug (`_debugUnlockAllWorlds`, hoje `true`) que já ignorava a trava por mundo. `_handleWorldTap` ganhou o parâmetro `track` pra montar a mensagem certa no toque bloqueado ("Complete a Trilha N primeiro para desbloquear." quando bloqueado por trilha, mensagem antiga preservada quando bloqueado só por mundo).
+
+**Testes atualizados:** `test/screens/world_select_screen_test.dart` — o teste que esperava exatamente 1 "EM BREVE" (card da Trilha 2 antiga) mudou para esperar **zero** badges "EM BREVE" (as duas trilhas têm conteúdo real agora; o Mundo 3/Trilha 2 não aparece "EM BREVE", aparece bloqueado por progresso até a Trilha 1 fechar — mas `_debugUnlockAllWorlds: true` mantém tudo tocável em teste/demonstração). `test/screens/register_gate_test.dart` reescrito para vencer a última fase do **Mundo 2** (`world2Levels.last`, "Enquanto Amarelo→A, Enquanto Roxo→B, Enquanto Amarelo→A", `VictoryScreen`) em vez do Mundo 3 — mesmo gate, novo gatilho.
+
+**Por quê:** pedido explícito do usuário — Mundo 3 é mais difícil (código de verdade) e deve vir depois, numa trilha própria, não misturado com os fundamentos.
+
+**Como aplicar:** `flutter analyze` limpo; suíte inteira passando. Se a Trilha 2 ganhar mais mundos no futuro, nada muda na trava (`_isWorldUnlocked` já generaliza por índice de trilha, não por número fixo); se `_debugUnlockAllWorlds` virar `false` antes da feira (TODO já existente em `world_select_screen.dart`), a Trilha 2 passa a exigir de verdade que a Trilha 1 (Mundos 1+2) esteja 100% completa antes de aparecer desbloqueada.
+
+---
+
 ## 2026-09-10 — `LeaderboardScreen`: 2 achados reais de UX Reviewer corrigidos (contraste do selo padrão, borda decorativa sem `onTap`)
 
 **Decisão:** revisão do UX Reviewer sobre a entrega acima (selos numerados do ranking) encontrou 2 problemas reais, corrigidos na hora em `_RankRow`:
@@ -624,3 +642,336 @@ Sem esses 2 passos, `FirebaseDeviceIdentity.currentUserId()`/`FirebaseLeaderboar
 **Por quê:** achados reais da revisão desta mesma etapa — pequenos e localizados, corrigidos na hora em vez de virar item de Roadmap.
 
 **Como aplicar:** `flutter analyze` limpo; `flutter test` com as 283 specs continuando a passar (nenhum teste dependia da borda ou da cor exata do texto do selo — `.claude/rules/testing.md` já orienta a nunca testar cor/pixel exato). Se uma tela nova precisar destacar um item de lista sem ação de toque, preferir cor de preenchimento/selo a borda+sombra — essa combinação é reservada para elementos realmente tocáveis.
+
+
+---
+
+## 2026-09-15 — Trilha 1 ganha o Mundo 3 ("Preveja a Saída"); Trilha 2 ganha o Mundo 4 ("Complete o Código"); Modo Debug vira Mundo 5
+
+**Decisão:** pedido explícito do usuário — faltava um "meio-termo" entre a Trilha 1 (visual, sem código de verdade) e o Modo Debug (código de verdade manipulável). Dividido em 2 mundos novos, cada um preenchendo uma ponta desse meio-termo:
+
+- **Mundo 3 — "Preveja a Saída"** (`WorldGameType.predictOutput`, `PredictOutputLevel`, `lib/models/predict_output_level.dart`): fecha a Trilha 1. O jogador só **lê** um trecho de código real, curto e já pronto (sem embaralhar/editar nada) e prevê o resultado por múltipla escolha (2-3 opções). É a leitura mais leve possível de código de verdade — sem nenhuma manipulação.
+- **Mundo 4 — "Complete o Código"** (`WorldGameType.completeCode`, `CompleteCodeLevel`, `lib/models/complete_code_level.dart`): abre a Trilha 2. O jogador vê um trecho de código com 1 linha em branco e escolhe, por múltipla escolha, qual linha completa certo — um degrau mais perto de `reorder`/`findBug` (exige entender a lógica pra escolher a linha certa), mas ainda por múltipla escolha, não por reordenar/apontar o erro.
+- **Modo Debug renumerado de Mundo 3 para Mundo 5** — precisou abrir espaço pro Mundo 3 novo na Trilha 1. Renomeado em cascata: `GameWorld.number` (3→5), `CodePuzzleLevel.world` (3→5 nas 12 fases), ids `world3_levelN`→`world5_levelN`, variável `world3Levels`→`world5Levels`, asset `world3_icon.png`→`world5_icon.png` (`git mv`), narração `world3_*.mp3`/`recap3_0.mp3`→`world5_*.mp3`/`recap5_0.mp3` (`git mv`), `worldTutorials`/`worldRecapSlides` chave `3`→`5`. Decisão de **renomear os ids também** (não só o `world`/número de exibição) — diferente do princípio geral de "id nunca muda" (`.claude/rules/naming.md`, pensado pra não corromper `Progress` salvo): como o jogo ainda não foi ao ar na feira (sem base real de jogadores/Firestore em produção), o ganho de manter a numeração de ids consistente com o número do mundo (`world5_levelN` = Mundo 5, não `world3_levelN` = Mundo 5) superou o risco.
+
+**Trilhas resultantes:** Trilha 1 "Fundamentos" (subtítulo voltou a "Sequência, decisão e leitura de código", igual a antes de o Modo Debug sair de lá) = Mundos 1-3; Trilha 2 "Avançado" (subtítulo "Complete e depure código de verdade") = Mundos 4-5.
+
+**Reuso quase total da UI/motor do Modo Debug** — nenhuma tela nova do zero:
+- `CodePuzzleResultScreen` (já genérica: `won`/`explanationText`/`correctOrderChips` opcionais) é reaproveitada **sem nenhuma mudança de código** pelos 2 mundos novos — `explanationText` vira a explicação sempre visível (mesmo papel de `bugExplanation`), `correctOrderChips` fica `null` (nenhum dos dois tem conceito de "ordem certa" como dica). Doc comment do arquivo generalizado pra deixar isso explícito.
+- `computeCodePuzzleScore` (`lib/game/code_puzzle_scoring.dart`, attempts→estrelas/pontos) reaproveitado sem alteração — a métrica "tentativas até acertar" já era genérica.
+- Extraído `highlightCodeLine` (`lib/widgets/code_syntax_highlight.dart`, o regex de palavras-chave que já existia dentro de `CodePuzzleGameplayScreen`) e `SelectableLineTile` (`lib/widgets/selectable_line_tile_widget.dart`, a linha/opção tocável com destaque de seleção que já existia como `_buildFindBugLine`) — reaproveitados pelos 3 mundos (`findBug` do Mundo 5 passou a usar os dois também, sem mudar de comportamento). `CodeLine` também foi extraído pra seu próprio arquivo (`lib/models/code_line.dart`) em vez de continuar dentro de `code_puzzle_level.dart`, já que agora 3 modelos diferentes precisam dela.
+- 2 telas de Gameplay novas (`PredictOutputGameplayScreen`/`CompleteCodeGameplayScreen`) e 2 de Seleção de Fases (`PredictOutputStageSelectScreen`/`CompleteCodeStageSelectScreen`), no mesmo molde exato das telas do Mundo 5 — gate de fim de Trilha 1 (`_returnToLevelSelect`/`isEndOfTrack1`), recapitulação de fim de Mundo, sincronização de `Progress`/`ProgressSync`, tudo copiado do mesmo padrão já estabelecido (nenhuma lógica nova inventada).
+
+**Cross-track lock já era genérico — nenhuma mudança de código necessária**: o lock "1º mundo de uma trilha N>1 exige a trilha anterior completa" (`_isWorldUnlocked` em `world_select_screen.dart`, adicionado na entrada anterior "Mundo 3 muda de Trilha") já usava `tracks`/`isTrackCompleted` genericamente — com a Trilha 1 agora tendo 3 mundos em vez de 2, e o gate de cadastro (`tracks.first.worlds.last.number`) apontando pro novo último mundo (Mundo 3) automaticamente, sem tocar nos 5 Gameplay screens.
+
+**`leaderboard_scoring.dart` (`_basePointsByWorld`) estendido** de `{1: 300, 2: 500, 3: 800}` pra `{1: 300, 2: 450, 3: 600, 4: 750, 5: 900}` — mantém a progressão "mundo mais difícil vale mais" com 5 degraus em vez de 3.
+
+**Ícones placeholder dos Mundos 3/4**: sem arte ilustrada de verdade disponível (mesma situação do mascote/SFX antes das artes reais — ver entradas acima), gerados por um script Python one-off (`Pillow`, mesmo espírito de `tool/generate_sfx.py`/script de ícones do PWA) com formas geométricas simples na paleta do jogo — Mundo 3: "bola de cristal" (previsão) abaixo de linhas de código; Mundo 4: linhas de código com uma lacuna tracejada + cursor piscando. Substituíveis por arte de verdade sem mudar código (só trocar `assets/images/world3_icon.png`/`world4_icon.png`).
+
+**Narração regenerada por completo** via `tool/generate_tutorial_narration.py` (`edge-tts`, já documentado) — `SLIDES` ganhou as chaves novas (`world3_*`, `world4_*`, `recap3_0`, `recap4_0`) e as renomeadas (`world3_*`→`world5_*`, `recap3_0`→`recap5_0`, texto do recap5 atualizado pra "5 mundos"). Rodado com sucesso nesta sessão (30 arquivos `.mp3`).
+
+**Por quê:** pedido explícito do usuário — precisava de um mundo "meio-termo" de preparação antes do Modo Debug; ele mesmo decidiu que "Complete o Código" fica na Trilha 2 (antes do Modo Debug) e "Preveja a Saída" fica na Trilha 1 (depois da Esteira), quando perguntado sobre as 3 mecânicas candidatas.
+
+**Como aplicar:** `flutter analyze` limpo; `flutter test` com **433 specs** passando — `test/game/predict_output_catalog_test.dart`/`complete_code_catalog_test.dart` (novos, dados estruturais das 12 fases de cada mundo) e `test/screens/predict_output_flow_test.dart`/`complete_code_flow_test.dart` (novos, vitória/derrota reais via `CodePuzzleResultScreen`); `test/game/code_puzzle_catalog_test.dart`/`code_puzzle_checker_test.dart`/`test/screens/code_puzzle_flow_test.dart` atualizados pro Mundo 5; `test/screens/world_select_screen_test.dart`/`no_overflow_test.dart`/`register_gate_test.dart` atualizados pra 5 mundos (o gate agora joga até a última fase do Mundo 3, não mais do Mundo 2). Se a Trilha 2 ganhar mais mundos no futuro, o padrão se repete: modelo (`GameLevel` + fábrica se precisar de tipos), checker inline (comparação de índice, sem novo arquivo se for só um `==`), reaproveitar `CodePuzzleResultScreen`/`computeCodePuzzleScore` sempre que o resultado for "veredito único por tentativas".
+
+---
+
+## 2026-09-16 — Migração para Riverpod + MVVM + Clean Architecture (pragmática) — supera a decisão de 2026-09-04
+
+**Decisão:** o app migrou de `setState`/`StatefulWidget` puro para **Riverpod 2.x + MVVM + Clean Architecture pragmática**, com geração de código (`riverpod_generator` + `freezed`). Esta entrada **substitui** a decisão "`setState` em vez de GetX/Riverpod" (2026-09-04, primeira entrada deste arquivo) — a própria decisão original já previa esse gatilho: *"Se o projeto crescer (mais mundos, comandos, telas) a ponto de `setState` ficar difícil de seguir, reavaliar aqui antes de migrar."*
+
+**Por quê:** pedido explícito do usuário, motivado pelos mesmos sinais que a decisão original já citava como gatilho de reavaliação — o projeto cresceu de "5 telas, um mundo" para **5 mundos/motores de jogo quase idênticos em forma, 16+ telas**, e havia pelo menos um acoplamento real que já doía: `lib/models/game_track.dart` (um arquivo de modelo, que deveria ser Dart puro) lia `Progress.instance` direto para calcular `isTrackCompleted`. Migração feita em 4 fases mecânicas (plano completo arquivado em `C:\Users\XProcess\.claude\plans\encapsulated-whistling-peach.md`):
+
+1. **Fase 0-1 (scaffolding + varredura mecânica):** pacotes adicionados (`flutter_riverpod`, `riverpod_annotation`, `freezed_annotation` em `dependencies`; `build_runner`, `riverpod_generator`, `freezed` em `dev_dependencies`); `main.dart` envolto em `ProviderContainer`/`UncontrolledProviderScope`. Os 5 singletons transversais (`Progress.instance`, `Onboarding.instance`, `AppAuth.instance`, `Leaderboard.instance`, `AppSounds.instance`) viraram providers em `lib/core/{progress,onboarding,auth,leaderboard,audio}/` — todos `@Riverpod(keepAlive: true)` (o padrão `@riverpod` sem essa flag é `autoDispose`, que apagaria progresso/mute/auth sempre que nenhuma tela estivesse observando, um bug real evitado nesta fase). `lib/audio/` e `lib/data/` foram apagados (conteúdo redistribuído em `core/`); `lib/models/onboarding.dart` apagado (virou `OnboardingNotifier`); `lib/models/progress.dart` encolheu pra só `LevelProgress`. Todas as 16 telas de `lib/screens/` ganharam `ConsumerWidget`/`ConsumerStatefulWidget` nesta fase, ainda sem extrair ViewModel — só pra manter o app compilando e idêntico em comportamento antes da reestruturação de verdade.
+2. **Fase 2 (Mundo 1, vertical de referência):** `gameplay_screen.dart`/`level_select_screen.dart`/`victory_screen.dart`/`failure_screen.dart` viraram `lib/features/maze/presentation/{gameplay,stage_select}/` + `lib/features/result/presentation/{victory_view,failure_view}.dart` — o par View/ViewModel/State e o padrão de efeito de navegação (`pendingEffect` na `State`, consumido via `ref.listen` na View) foram fixados aqui. `RecordLevelWinUseCase` (`lib/core/progress/record_level_win_usecase.dart`) nasceu nesta fase — o único caso do app onde um `_usecase.dart` se justifica (orquestração de "registrar vitória + somar pontos de sessão só na 1ª vez + detectar mundo recém-completo", antes duplicada nas 5 telas de Gameplay).
+3. **Fase 3 (Mundos 2-5):** o mesmo padrão replicado para `conveyor`, `predict_output`, `complete_code`, `code_puzzle` — cada um com seu próprio `_state.dart`/`_view_model.dart`/`_view.dart`, reaproveitando `RecordLevelWinUseCase` sem alteração. Os 3 mundos "veredito único" (Preveja a Saída, Complete o Código, Modo Debug) não têm o loop de animação passo a passo do Mundo 1/2 — o ViewModel resolve o resultado sincronamente ao confirmar uma resposta, com um único efeito `showResult` (não `NavigateToVictory`/`NavigateToFailure` separados, já que não há "bateu na parede vs. não chegou" para distinguir). `code_puzzle_result_screen.dart` virou `lib/features/result/presentation/code_puzzle_result_view.dart` (não ficou dentro de `code_puzzle/`) porque é reaproveitada pelos 3 mundos, não só o Modo Debug.
+4. **Fase 4 (telas restantes):** `world_select_screen.dart`, `splash_screen.dart` → `WorldSelectView`/`SplashView` (sem ViewModel, `ref.watch` direto no `build()`); `tutorial_screen.dart` → `TutorialView` (`ConsumerStatefulWidget` com estado local — índice do slide, progresso da máquina de escrever — mantido como `setState` porque é estado de apresentação/animação puro, não de aplicação, ver `.claude/rules/architecture.md`); `leaderboard_screen.dart` → `LeaderboardViewModel`/`LeaderboardView` (ganhou ViewModel de verdade: `AsyncNotifier<List<LeaderboardEntry>>`, sem `_state.dart` próprio — `AsyncValue` já modela loading/data/erro, embrulhar isso numa classe `@freezed` só duplicaria o gerado); `register_screen.dart` → `RegisterState`/`RegisterViewModel`/`RegisterView` (ganhou ViewModel de verdade: modo/envio/erro no estado, `TextEditingController`s continuam na View); `survey_screen.dart` → `SurveyView` (ficou só widget — único ponto de orquestração é um `_submit()` de disparo único, sem estado async intermediário que valesse extrair). `lib/screens/` foi apagada por inteiro ao esvaziar.
+
+**Estrutura alvo final** (`lib/`): `models/`, `game/` (domínio, inalterados em comportamento), `core/` (infraestrutura transversal via provider), `theme/`, `widgets/` (Design System), `features/*/presentation/` (View+ViewModel+State por mundo/tela), `main.dart`.
+
+**Por que "pragmática", não textbook-strict:** `lib/models/`/`lib/game/` foram tratados como o núcleo de domínio já pronto — Dart puro, já testado, já se comportava como camada de domínio — e não foram reescritos nem movidos para dentro de `features/`. Não existe `LevelRepository` para os catálogos estáticos (`world1Levels` etc.) — continuam `final` top-level lists, sem fonte de dados alternativa a justificar um repositório. `SettingsDialog` continua em `lib/widgets/` (não virou `features/settings/`) — é um dialog chamado de várias telas, não uma tela roteada.
+
+**Como aplicar:** `flutter analyze` limpo; `flutter test` com **437 specs** passando ao final de cada uma das 4 fases (nenhuma regressão de comportamento, só reestruturação). Ao criar uma feature nova, seguir a tabela de nomenclatura em `.claude/rules/naming.md` e a árvore em `.claude/rules/architecture.md` — `/generate-screen` já gera no formato novo (`_view.dart`/`_view_model.dart`/`_state.dart` sob `lib/features/<feature>/presentation/`). Toda classe `@riverpod`/`@freezed` nova exige rodar `dart run build_runner build --delete-conflicting-outputs` antes de comitar (`.claude/rules/git-workflow.md`) — os arquivos gerados (`*.g.dart`, `*.freezed.dart`) ficam versionados no repositório.
+
+---
+
+## 2026-09-17 — Desbloqueio de Mundo por pontos (60%), não mais 100% das fases; Trilha continua exigindo 100%
+
+**Decisão:** pedido explícito do usuário — o próximo Mundo dentro da mesma Trilha desbloqueia quando o jogador acumula **60% da pontuação máxima possível do Mundo anterior** (soma dos "PONTOS" de vitória das fases já vencidas naquele mundo — não precisa jogar/vencer as 12 fases). Fases não jogadas continuam 100% acessíveis depois, sem nenhum bloqueio adicional — só o *próximo* Mundo abre mais cedo. A passagem de **Trilha** (1º mundo de uma trilha N>1) **não mudou** — continua exigindo 100% das fases de todos os mundos da trilha anterior (`isTrackCompleted`), confirmado explicitamente pelo usuário como a regra que já existia e deve continuar.
+
+**Métrica escolhida:** soma de `LevelProgress.bestPoints` (novo campo) das fases do mundo — não estrelas, não `Progress.sessionScore` (que é cumulativo entre mundos/trilhas e usado só pro Placar do Dia, um conceito separado). `LevelProgress` ganhou `bestPoints` (melhor pontuação já obtida numa fase, mesmo padrão de `bestBlocks`/`stars` — sempre o melhor resultado, nunca regride). `ProgressNotifier.recordWin` ganhou o parâmetro `points` (antes só `stars`/`blocksUsed`); `RecordLevelWinUseCase` passa `score.points` automaticamente — nenhum dos 5 ViewModels de Gameplay precisou mudar.
+
+**Pontuação máxima do mundo:** `world.levels.length * maxLevelPoints` — `maxLevelPoints` é uma constante nova (`300`, `lib/game/scoring.dart`), extraída dos literais que `computeScore`/`computeCodePuzzleScore` já usavam como teto de pontos por fase (nenhuma mudança na fórmula em si, só nomeou o número mágico que os dois arquivos repetiam). Limiar de 60% calculado em `WorldSelectView._worldUnlockPointsThreshold` — arredondado (`.round()`), sem cache/memoização (é uma conta trivial, refeita a cada rebuild).
+
+**`ProgressState.totalPoints(levelIds)`** (novo, ao lado de `totalStars`) soma `bestPoints` das fases dadas, 0 para fase não jogada — usado por `_isWorldUnlocked` no lugar de `isWorldCompleted` **só** para o caso "Mundo N>1 dentro da mesma Trilha"; o caso "1º mundo de uma Trilha N>1" continua usando `isTrackCompleted` sem mudança.
+
+**Firestore:** `FirestoreProgressRepository` ganhou `bestPoints` na leitura/escrita de `players/{uid}.progress.{levelId}` — documentos salvos antes desta mudança não têm o campo, tratado com fallback `?? 0` (só zera o total de pontos daquele mundo até o jogador vencer fases de novo; não quebra nada, aceitável porque o jogo ainda não foi ao ar na feira, mesmo raciocínio já usado nas renumerações de mundo anteriores).
+
+**Por quê:** pedido explícito do usuário — queria uma progressão mais suave dentro de uma Trilha (recompensar quem já mostrou domínio da mecânica sem forçar 100% de conclusão antes de ver o próximo Mundo), mas manter a barreira mais alta (100%) entre Trilhas, que representam um salto de dificuldade real (Trilha 2 já manipula código de verdade).
+
+**Como aplicar:** `flutter analyze` limpo; `flutter test` com as 437 specs continuando a passar (`test/core/progress/progress_notifier_test.dart` ganhou cobertura de `bestPoints`/`totalPoints`). `_debugUnlockAllWorlds` (`world_select_view.dart`, hoje `true`) continua ignorando qualquer trava — quando virar `false` antes da feira, o limiar de 60% passa a valer de verdade. Se o limiar precisar mudar no futuro, é um único número em `_worldUnlockPointsThreshold` (`world_select_view.dart`) — nada mais depende dele.
+
+---
+
+## 2026-09-17 — Bug real corrigido: narração do Tutorial continuava tocando depois de "Pular"
+
+**Decisão:** achado real do usuário — ao tocar "Pular" na `TutorialView`, a narração do slide atual continuava tocando por cima da tela seguinte (o `onFinish` navegava embora sem parar o áudio). `SoundPlayer` (`lib/core/audio/sound_player.dart`) ganhou um método `stop()` (implementado em `AudioplayersSoundPlayer` via `_player.stop()`, e em `FakeSoundPlayer` via uma flag `stopped` pra teste); `AppSoundsService` ganhou `stopNarration()` (mesmo padrão de engolir erro dos outros métodos). `TutorialView` chama `stopNarration()` em `_finish()` (chamado tanto por "Pular" quanto ao terminar o último slide) **e** em `dispose()` como rede de segurança.
+
+**Achado de implementação:** `ref.read(...)` dentro de `dispose()` lança `StateError: Cannot use "ref" after the widget was disposed` em `ConsumerStatefulElement` — `ref` já não é seguro nesse ponto do ciclo de vida. Corrigido guardando a referência ao serviço (`late final AppSoundsService _appSounds`) em `initState`, usada depois tanto em `_playNarrationForCurrentSlide`/`_finish` quanto em `dispose`, sem nunca ler `ref` de novo depois do widget montado.
+
+**Por quê:** achado real do usuário testando o app.
+
+**Como aplicar:** `flutter analyze` limpo; `flutter test` com as 437 specs continuando a passar. Qualquer `ConsumerState`/`ConsumerStatefulWidget` que precise limpar algo em `dispose()` usando um provider deve seguir o mesmo padrão — capturar a referência em `initState`/antes do descarte, nunca `ref.read`/`ref.watch` dentro do próprio `dispose()`.
+
+---
+
+## 2026-09-17 — Nomes das Trilhas: "Fundamentos"/"Avançado" viram "Lógica em Apuros"/"Modo Programador"
+
+**Decisão:** pedido explícito do usuário — nomes mais divertidos para as duas Trilhas, mantendo o tema de cada uma. Trilha 1 (Mundos 1-3, sequência/decisão/leitura de código) vira **"Lógica em Apuros"** (tom brincalhão, tema "Lógica"); Trilha 2 (Mundos 4-5, completar/depurar código de verdade) vira **"Modo Programador"** (tema "Programar", soa como um upgrade de nível). Só o campo `GameTrack.name` mudou (`lib/models/game_track.dart`) — `subtitle`, `number`, `worlds` e toda a lógica de desbloqueio/gate de cadastro continuam iguais, nenhum teste depende do nome exato da trilha (procuram por `'TRILHA N'`/`textContaining`, não pelo nome).
+
+**Por quê:** pedido explícito do usuário.
+
+**Como aplicar:** `flutter analyze` limpo; `flutter test` com as 437 specs continuando a passar sem nenhum ajuste de teste necessário. Se o nome mudar nesta ou em Trilhas futuras, é só o `name:` de cada `GameTrack` em `lib/models/game_track.dart`.
+
+---
+
+## 2026-09-17 — Bug real corrigido: progresso jogado sem conta se perdia ao logar numa conta de outro aparelho
+
+**Decisão:** achado real do usuário — se o jogador joga sem conta num aparelho (progresso local, UID anônimo) e depois loga numa conta que já tem progresso salvo de **outro** aparelho, `ProgressNotifier._hydrate()` fazia `state = saved` (substituição direta) — descartando tudo que foi jogado localmente antes do login, sem mesclar com o que já existia na conta.
+
+**Correção: `ProgressState.mergedWith(other)`** (novo), chamado em `_hydrate()` no lugar da substituição direta. Por fase: fica com o melhor resultado (mais estrelas, menos blocos, mais pontos) — mesmo critério que `ProgressNotifier.recordWin` já usa quando a mesma fase é vencida duas vezes na mesma conta, só que aplicado fase a fase entre os dois estados inteiros. `sessionScore`: fica com a maior das duas (nunca soma — evita inflar a pontuação de sessão artificialmente só por ter trocado de conta no meio do caminho). `hasSubmittedToLeaderboard`: vira `true` se qualquer um dos dois já tiver enviado.
+
+**Por que `mergedWith` e não um caminho separado só para "login numa conta existente":** no boot (`build()` → `_hydrate()` via `Future.microtask`), `state` ainda é o `ProgressState()` vazio — mesclar com `saved` nesse caso é equivalente a simplesmente adotar `saved` (nenhuma mudança de comportamento no caminho mais comum). Só quando `rehydrate()` roda **depois** de o jogador já ter progresso local acumulado (jogou sem conta, depois logou) é que a mesclagem realmente muda o resultado — um único método cobre os dois casos sem duplicar lógica ou precisar de uma flag "é o primeiro hydrate ou não".
+
+**Por quê:** achado real do usuário, cenário concreto: "e se meu usuário logar por outro dispositivo e ficar jogando sem conta depois logar pela conta dele? como vai tratar os pontos adquiridos?".
+
+**Como aplicar:** `flutter analyze` limpo; `flutter test` com **439 specs** passando (2 novas: `ProgressState.mergedWith` — melhor por fase/maior sessionScore/OR de `hasSubmittedToLeaderboard` — e `ProgressNotifier._hydrate` mesclando em vez de substituir num cenário de login com progresso local prévio). O documento Firestore da conta anônima (`players/UID_B`) não é apagado nem migrado — fica órfão no banco (mesmo comportamento de antes, fora de escopo desta correção).
+
+---
+
+## 2026-09-17 — Bug real corrigido (raiz de dois relatos do usuário): `FirebaseDeviceIdentity` cacheava o UID anônimo pra sempre, mesmo depois de logar
+
+**Decisão:** achado real do usuário, dois sintomas que pareciam separados mas tinham a mesma causa: (1) "joguei a fase 1 do Mundo 1, loguei como 'tete', e não estava salvo lá" e (2) "logo com uma conta, mas o Placar continua mostrando o convite 'Quer aparecer no Placar?' mesmo já tendo respondido a Pesquisa antes".
+
+**Causa raiz:** `FirebaseDeviceIdentity.currentUserId()` (`lib/core/firebase_device_identity.dart`) cacheava o UID em `_cachedUid` na 1ª resolução e devolvia esse valor cacheado pra sempre, sem nunca checar `FirebaseAuth.instance.currentUser` de novo. Como `FirestoreProgressRepository`/`FirebaseLeaderboardRepository` (ambos consumidores de `DeviceIdentity`) usam esse UID pra decidir em qual documento `players/{uid}` ler/escrever, **qualquer** `fetch()`/`save()` de progresso ou `submit()` de Placar feito depois de um login bem-sucedido continuava lendo/escrevendo no documento do UID **anônimo** antigo (cacheado antes do login), nunca no UID de verdade da conta — mesmo com `AuthService`/`FirebaseAuth.instance.currentUser` já refletindo corretamente a conta logada. Os dois sintomas relatados eram esse mesmo bug: progresso jogado depois do login "sumia" da conta (na real, estava sendo salvo num documento anônimo órfão que a conta nunca lê de volta), e `hasSubmittedToLeaderboard`/`sessionScore` sincronizados depois de responder a Pesquisa também iam pro documento errado, então o próximo `fetch()` (agora sim pelo UID certo) nunca via a mudança.
+
+**Correção:** removida a cache — `currentUserId()` agora sempre lê `FirebaseAuth.instance.currentUser` ao vivo (síncrono, sem custo de rede), só chamando `signInAnonymously()` quando **não há** usuário nenhum ainda (1ª vez de verdade, sem sessão). Isso acompanha corretamente qualquer troca de identidade (login/link) que já acontecia no resto do app, sem precisar de nenhuma invalidação manual de cache.
+
+**Por quê:** achado real do usuário, dois relatos que investigados juntos apontaram pra essa única causa raiz — não era o `ProgressState.mergedWith` da entrada anterior (que está correto), era o UID errado sendo usado pra ler/gravar no Firestore o tempo todo depois do 1º login de cada sessão do app.
+
+**Como aplicar:** `flutter analyze` limpo; `flutter test` com as 439 specs continuando a passar (nenhum teste existente cobria `FirebaseDeviceIdentity` diretamente — é um wrapper fino sobre `FirebaseAuth`, mesmo padrão de não-testar-diretamente já usado pra `FirestoreProgressRepository`/`FirebaseLeaderboardRepository`). Documentos órfãos já criados em `players/{uid-anônimo-antigo}` por sessões anteriores ao fix continuam no Firestore (não foram limpos, fora de escopo) — não afetam o jogo, só ficam sem dono de verdade a partir de agora.
+
+---
+
+## 2026-09-17 — Bug real corrigido: Placar não mostrava a entrada recém-enviada sem sair e voltar
+
+**Decisão:** achado real do usuário — depois de responder a Pesquisa e confirmar, o Placar do Dia mostrado logo em seguida continuava vazio ("Ninguém no Placar ainda hoje"), mesmo o envio tendo funcionado.
+
+**Causa raiz:** `leaderboardViewModelProvider` (`lib/features/leaderboard/presentation/leaderboard_view_model.dart`) não é `.family` — é a mesma instância de provider em qualquer `LeaderboardView` da árvore. No fluxo real (Seleção de Mundo → `LeaderboardView` → toca "Aparecer no Placar" → `SurveyView` empurrada por cima), a `LeaderboardView` original continua montada (offstage) na pilha do `Navigator` por baixo da `SurveyView` — e como `ConsumerWidget` mantém a assinatura do provider enquanto está montado, mesmo offstage, o provider `autoDispose` nunca chegava a zero listeners entre o envio e a navegação seguinte. `SurveyView._submit()` fazia `pushReplacement` pra uma `LeaderboardView` **nova**, mas essa tela nova reusava o resultado **cacheado** do fetch original (de antes do envio, vazio) em vez de buscar de novo — o provider nunca soube que precisava recarregar.
+
+**Correção:** `SurveyView._submit()` chama `ref.invalidate(leaderboardViewModelProvider)` logo depois de `submit()`/`markSubmittedToLeaderboard()`, antes do `pushReplacement` — invalida o resultado cacheado (de qualquer `LeaderboardView` que esteja escutando, inclusive a original offstage), forçando um novo `topToday()` na próxima leitura.
+
+**Por que o teste existente não pegava isso:** `test/screens/leaderboard_flow_test.dart` tinha um teste ("enviar a pesquisa registra...") que pumpava `SurveyView` **isolada** (sem uma `LeaderboardView` anterior na árvore) — nesse cenário o provider nunca tinha sido lido antes, então a 1ª leitura (na tela nova) já vinha naturalmente correta, mascarando o bug. Novo teste ("depois de enviar a pesquisa, o Placar recém-aberto já mostra a entrada") reproduz o fluxo real (`LeaderboardView` → toca "Aparecer no Placar" → `SurveyView` por cima → envia) e falha sem o `ref.invalidate` — guarda contra essa regressão específica de verdade.
+
+**Por quê:** achado real do usuário — "por que no placar não está aparecendo meu nome?".
+
+**Como aplicar:** `flutter analyze` limpo; `flutter test` com **440 specs** passando (1 nova). Qualquer provider não-`.family` que alimenta uma tela reaberta via `pushReplacement`/nova instância — enquanto a tela anterior pode continuar montada offstage na pilha do `Navigator` — precisa de `ref.invalidate(...)` explícito depois de uma mutação que deveria refletir nela, não basta contar com `autoDispose` sozinho.
+
+---
+
+## 2026-09-17 — Placar do Dia vira Placar Geral (sem recorte de dia); lista separada de quem zerou o jogo; pontuação atualiza sozinha
+
+**Decisão:** pedido explícito do usuário, motivado pela investigação do relato "por que meu nome não aparece no placar" — o Placar do Dia (filtrado por hoje) fazia sentido só enquanto o app rodava num único evento de um dia. O usuário decidiu mudar o conceito: **"o placar vai ser único, sem dia... se a pessoa zerar o jogo sai do placar e entra em uma outra lista de pessoas que zeraram o jogo"**. Duas perguntas de acompanhamento fechadas com o usuário antes de implementar: (1) a pontuação deve **atualizar sozinha** conforme o jogador continua jogando (não precisa reenviar manualmente); (2) "zerar o jogo" = **100% das fases dos 5 Mundos** (as 2 Trilhas completas).
+
+**Modelo de dados — de "histórico por envio" para "1 entrada por jogador":** `scores/{scoreId}` (Firestore, ID automático, um documento novo a cada envio) virou `scores/{uid}` (chave = UID do jogador) — `LeaderboardRepository.submit` agora faz upsert (`.doc(uid).set(..., merge: true)`), não mais `.add(...)`. Sem isso, "placar sem dia" acumularia infinitas entradas duplicadas da mesma pessoa ao longo do tempo. `LeaderboardEntry` ganhou `gameCompleted`/`completedAt`; `submittedAt` foi renomeado pra `updatedAt` (deixou de significar "quando foi enviado pela 1ª vez" pra significar "última sincronização").
+
+**`LeaderboardRepository`: `topToday()` → `topOverall()` + `completedGame()`** — a 1ª lista filtra `gameCompleted == false` (ordenada por pontos, maior primeiro); a 2ª filtra `gameCompleted == true` (ordenada por `completedAt`, quem terminou primeiro aparece primeiro). Ambas buscam a coleção `scores` inteira e filtram/ordenam no cliente (mesmo padrão simples de antes — poucos jogadores esperados num jogo de estande, sem necessidade de índice composto do Firestore).
+
+**Atualização automática — `LeaderboardSyncService`** (novo, `lib/core/leaderboard/leaderboard_sync_service.dart`): monta a `LeaderboardEntry` atual (nome da conta, idade/"já programou" guardados no `ProgressState`, `sessionScore` atual, `gameCompleted`/`gameCompletedAt`) e reenvia via `submit()`. Chamado em 2 lugares: `SurveyView._submit()` (1º envio) e `RecordLevelWinUseCase.call()` (fire-and-forget, `unawaited`, depois de toda vitória) — `resync()` não faz nada se `!hasSubmittedToLeaderboard`, então `RecordLevelWinUseCase` pode chamar incondicionalmente sem checar antes. Isso exigiu `ProgressState` guardar `surveyAge`/`surveyHasProgrammedBefore` (novos campos, sincronizados no Firestore junto do resto) — sem eles, o reenvio automático não teria de onde tirar esses 2 dados sem perguntar nada de novo ao jogador.
+
+**Detecção de "zerar o jogo"**: `ProgressState.isGameCompleted()` (`tracks.every(isTrackCompleted)` — todas as Trilhas, generalização de `isTrackCompleted` que já existia por trilha). `RecordLevelWinUseCase` compara antes/depois de `recordWin` (mesmo padrão já usado pra `worldJustCompleted`) e chama `ProgressNotifier.markGameCompleted()` só na transição `false → true` — `gameCompletedAt` fica gravado uma vez só, nunca reescrito numa vitória seguinte (replay de fase depois de já ter zerado).
+
+**`ProgressNotifier.markSubmittedToLeaderboard()` virou `submitToLeaderboard({age, hasProgrammedBefore})`** — guarda os 2 campos junto da flag, num método só.
+
+**UI**: `LeaderboardView` (era `LeaderboardScreen`) virou `ConsumerStatefulWidget` com uma aba local (`_selectedTab`, estado puramente de apresentação — não precisa de ViewModel) alternando "Geral"/"Zeraram o Jogo" (`_TabButton`, mesmo padrão visual de `_YesNoOption` da Pesquisa). "PLACAR DO DIA" → "PLACAR GERAL" em toda a UI (título, eyebrow, texto da `SurveyView`); estado vazio "Ninguém no Placar ainda hoje" → "Ninguém no Placar ainda" (sem "hoje"), com uma variação pra aba de quem zerou ("Ninguém zerou o jogo ainda").
+
+**Regras do Firestore atualizadas** (`firestore.rules`): `scores/{scoreId}` → `scores/{uid}`, `allow create, update` (era só `create`, imutável) pelo próprio dono, `allow delete: if false` mantido. **Ainda não publicado** (`firebase deploy --only firestore:rules`) — pendente de confirmação do usuário antes de aplicar em produção.
+
+**Dados de teste órfãos no Firestore**: 2 documentos antigos de `scores` (ID automático, de antes desta mudança, sessão de testes do usuário — 2026-09-10 e 2026-09-15) continuam no banco, não migrados pro novo esquema `scores/{uid}`. Como `gameCompleted` neles não existe (`fromJson` cai no padrão `false`), eles apareceriam duplicados na lista "Geral" ao lado da entrada nova (uid-keyed) da mesma pessoa até serem removidos manualmente — pendente, fora de escopo desta entrada (não apaguei sem confirmar com o usuário primeiro).
+
+**Como aplicar:** `flutter analyze` limpo; `flutter test` com **444 specs** passando (novos: `test/core/progress/record_level_win_usecase_test.dart`, cobrindo resync automático e a transição de `gameCompleted`; `ProgressState.mergedWith`/`ProgressNotifier` testes atualizados pros campos novos). Se um mundo/trilha novo entrar no futuro, `isGameCompleted()` já generaliza (`tracks.every`, não uma lista fixa) — nenhuma mudança necessária pra continuar detectando "zerou tudo" corretamente.
+
+---
+
+## 2026-09-17 — Botão "Sair" nas Configurações (logout)
+
+**Decisão:** pedido explícito do usuário — `AuthService` ganhou `signOut()` (implementado em `FirebaseAuthService` via `FirebaseAuth.instance.signOut()`, nunca lança). `SettingsDialog` mostra "Sair" (mesmo estilo visual de "Criar conta") ao lado de "Conectado como `<nome>`" quando há conta. Ao tocar, chama `signOut()` e depois `ProgressNotifier.resetForNewPlayer()` (novo — zera `state` pra `ProgressState()` vazio e hidrata de novo, o que cria uma sessão anônima nova já que `FirebaseAuth.currentUser` fica `null` depois do `signOut`).
+
+**Por que resetar o progresso local também, não só sair da conta:** pensado pro estande — aparelho compartilhado entre vários jogadores ao longo do dia ("Sou um novo jogador", pendência já prevista num plano antigo, `jazzy-hatching-newt.md`). Sem resetar, o próximo jogador veria o progresso/estrelas da pessoa anterior até jogar algo novo. O progresso da conta que saiu **não se perde** — continua salvo com segurança no Firestore dela (`players/{uid}`), recuperável normalmente ao logar de novo (`mergedWith`, ver entrada de 2026-09-17 anterior sobre merge no login).
+
+**Por quê:** pedido explícito do usuário.
+
+**Como aplicar:** `flutter analyze` limpo; `flutter test` com as 445 specs passando (`test/screens/settings_dialog_test.dart` ganhou um caso cobrindo "Sair" some a conta e zera `sessionScore` local). `FakeAuthService.signOut()` (`test/helpers/`) segue o mesmo padrão dos outros métodos fake — muda `_hasAccount`/`_displayName` em memória, sem tocar Firebase de verdade.
+
+---
+
+## 2026-09-17 — Bug real corrigido: contas que responderam a Pesquisa antes do Placar Geral nunca reenviavam (surveyAge/surveyHasProgrammedBefore nulos)
+
+**Decisão:** achado real do usuário — depois de toda a migração pro Placar Geral (entrada anterior), a conta "tete" continuava sem aparecer. Investigado direto no Firestore (via `firebase` CLI + REST API): `players/{uid}` tinha `hasSubmittedToLeaderboard: true` (herdado de um envio **anterior** ao redesenho), mas `surveyAge`/`surveyHasProgrammedBefore` (campos novos) estavam `null` — nunca escritos, porque não existiam quando ela respondeu a Pesquisa a 1ª vez. Como `LeaderboardSyncService.resync()` só dispara depois de uma vitória nova (`RecordLevelWinUseCase`), e essa conta não tinha jogado nada desde o redesenho, o Firestore nunca recebeu a entrada — a coleção `scores` continuava vazia pra ela, mesmo com `hasSubmittedToLeaderboard: true` (o que também escondia o cartão de convite, já que a condição é `!hasSubmittedToLeaderboard`).
+
+**Correção:** `FirestoreProgressRepository.fetch()` agora cai de volta pros campos legados `age`/`hasProgrammedBefore` (escritos na época em que o antigo `FirebaseLeaderboardRepository.submit()` gravava esses campos direto em `players/{uid}`, antes do redesenho) quando `surveyAge`/`surveyHasProgrammedBefore` ainda não foram preenchidos — `surveyAge: (data['surveyAge'] as num?)?.toInt() ?? (data['age'] as num?)?.toInt()`, mesmo padrão pra `surveyHasProgrammedBefore`/`hasProgrammedBefore`. Corrige qualquer conta que respondeu a Pesquisa antes de 2026-09-17, não só a "tete".
+
+**Por quê:** achado real do usuário, ao investigar por que a conta de teste ainda não aparecia depois do redesenho do Placar Geral.
+
+**Como aplicar:** `flutter analyze` limpo; `flutter test` com as 445 specs continuando a passar (sem teste dedicado pra `FirestoreProgressRepository` — é um wrapper fino sobre Firestore, mesmo padrão de não-testar-diretamente já usado pros outros repositórios Firebase). O usuário optou por testar jogando/revendendo uma fase de verdade no app em vez de eu escrever a entrada manualmente no Firestore — próxima vitória de qualquer conta nessa situação já deve gerar a entrada certa no Placar Geral sozinha.
+
+---
+
+## 2026-09-17 — Splash redesenhada (UI Engineer + UX Reviewer): ícones de Mundo orbitando o Mascote, animações de entrada
+
+**Decisão:** pedido explícito do usuário — deixar a Splash (`lib/features/splash/presentation/splash_view.dart`) mais atrativa, usando as imagens dos mundos do jogo e com animações. Delegado ao agente **UI Engineer**, depois revisado pelo **UX Reviewer** (fluxo padrão do projeto), com achados reais corrigidos na sequência.
+
+**Implementado pelo UI Engineer** — `SplashView` virou `StatefulWidget` (`TickerProviderStateMixin`, 3 `AnimationController`s, todos com `dispose()`):
+1. `_entrance` (900ms, único disparo): fade + leve deslocamento/escala em cascata dos blocos da tela ao abrir (eyebrow → subtítulo → título → mascote → botão).
+2. `_glow` (3200ms, loop): o brilho decorativo do canto passou a pulsar opacidade/escala em vez de ficar estático.
+3. `_orbit` (26s, loop contínuo): os 5 ícones ilustrados de Mundo (`assets/images/world{N}_icon.png`, já usados na Seleção de Mundo) passaram a orbitar o círculo do Mascote, com contra-rotação (mantêm a mesma orientação enquanto giram de posição) — uma prévia visual da jornada logo na 1ª tela.
+
+**4 achados reais do UX Reviewer, corrigidos na hora:**
+1. **Título com linha órfã** — "DEBUGA\nO\nMASCOTE" (3 linhas forçadas com `\n` literais) deixava o "O" sozinho numa linha inteira, uma órfã tipográfica clássica dentro do `FittedBox`. Corrigido pra 2 linhas: "DEBUGA O" / "MASCOTE".
+2. **Mascote "flat" perto dos ícones orbitando** — o disco de fundo do Mascote era só uma cor sólida chapada (`purpleDark`), sem o mesmo acabamento (borda, sombra) que os badges de Mundo ao redor ganharam — invertia a hierarquia visual esperada (o protagonista deveria ter mais peso visual, não menos). Corrigido: o disco ganhou gradiente (`purple` → `purpleDark`), borda `lilac` de 5px e a mesma sombra dura (`AppShadows.hard`) dos botões/cards do jogo; `mascotSize` subiu de 86% pra 92% do círculo (menos vazio escuro ao redor da arte).
+3. **Excesso de movimento simultâneo competindo com o botão "JOGAR"** — cada ícone orbitando tinha um `Bobbing` individual **além** da órbita (8 animações rodando ao mesmo tempo). Removido o `Bobbing` por ícone — a órbita sozinha já comunica "isto está vivo".
+4. **Falsa affordance de toque** — os badges de Mundo (borda lilás 3px + sombra dura) usavam a mesma linguagem visual de elementos **tocáveis** do resto do app (nós do `ZigzagMap`), mas não tinham `onTap` nenhum — mesmo padrão de erro já corrigido antes no projeto (ver entrada "`LeaderboardScreen`: 2 achados reais..."). Corrigido: badges perderam a sombra dura e ganharam só um contorno fino translúcido (`lilac` a 60% de opacidade, 1.5px) — sem nenhuma linguagem de "toque aqui".
+
+**Achado defensivo do UX Reviewer, também corrigido:** a ordem de pintura do `Stack` desenhava os ícones **antes** do disco do Mascote — em telas onde o raio da órbita fica menor que o raio do disco, um ícone podia ficar parcialmente escondido atrás dele. Corrigido invertendo a ordem (disco + Mascote pintados primeiro, ícones por cima) — elimina qualquer risco de oclusão em qualquer tamanho de tela, sem precisar mexer na matemática de posição.
+
+**Achado do UX Reviewer sobre os assets, não corrigido nesta entrada (fora do escopo de código)**: os ícones `world3_icon.png`/`world4_icon.png` (gerados por IA nesta mesma sessão, ver entrada "e porque no placar do dia..." — não, ver a entrada de geração de ícones anterior) têm uma "nuvem"/brilho cinza-claro pintado dentro da própria arte (não é transparência real, é conteúdo opaco), diferente de `world1`/`world2`/`world5` (fundo 100% transparente). Isso deixa os 5 ícones inconsistentes entre si quando orbitando juntos. Confirmado por inspeção visual direta dos 5 arquivos. Não é um bug de código — é um problema do asset em si; requer regerar `world3_icon.png`/`world4_icon.png` com um prompt mais explícito sobre "sem nenhum brilho/nuvem no fundo, só o elemento central, resto 100% transparente".
+
+**Por quê:** pedido explícito do usuário; os achados do UX Reviewer são exatamente o tipo de problema real (hierarquia visual, affordance falsa, excesso de movimento) que essa etapa do processo existe pra pegar antes de considerar pronto.
+
+**Como aplicar:** `flutter analyze` limpo; suíte inteira (445 specs) passando sem precisar de nenhum teste novo/ajustado (`test/screens/no_overflow_test.dart` já cobre `SplashView` nos 3 tamanhos de tela, incluindo o pior caso de texto revelado). Se `world3`/`world4` forem regenerados no futuro, nenhuma mudança de código é necessária — só substituir os 2 arquivos.
+
+---
+
+## 2026-09-17 — Título "DEBUGA O MASCOTE" da Splash vira um cartão com selo "</>"
+
+**Decisão:** pedido explícito do usuário — o título continuava "sem graça" mesmo depois do ajuste anterior (linha órfã corrigida). Apresentadas 2 direções (cartão com selo `</>` vs. hero centralizado); usuário escolheu a 1ª. `lib/features/splash/presentation/splash_view.dart`: o bloco "DEBUGA O / MASCOTE" agora mora dentro de um `HardShadowBox` (fundo `panel`, borda `lilas` 2px, sombra dura `purpleShadow`, cantos arredondados 20px — mesma linguagem de card já usada em `WorldSelectView`/`LeaderboardView`), com um selo circular `purple`/branco com "</>" à esquerda do texto (`Row` dentro do `FittedBox` que já existia, escalando os dois juntos). O texto "</>" que antes abria a linha "JOGO DE LÓGICA" (acima do título) foi removido de lá — o selo do cartão agora é o único lugar com esse glifo, evitando repetição visual próxima.
+
+**Cor do selo — `purple`, não `yellowNeon`:** mesmo critério já aplicado nos selos decorativos de `WorldSelectView`/`LeaderboardView` (entradas anteriores) — `yellowNeon` significa "isto é tocável" neste jogo (botão "JOGAR", nós do mapa), e o cartão do título não tem nenhuma ação.
+
+**Por quê:** pedido explícito do usuário, depois de já ter corrigido a linha órfã do título numa entrada anterior e ainda achar o resultado fraco.
+
+**Como aplicar:** `flutter analyze` limpo; suíte inteira (445 specs) passando sem ajuste de teste (`no_overflow_test.dart` já cobre a Splash nos 3 tamanhos de tela, inclusive o menor, 320×568). Tamanho da fonte do título reduzido de 52 pra 44 (o selo ocupa espaço horizontal a mais dentro do mesmo cartão).
+
+---
+
+## 2026-09-17 — Splash: título, Mascote e ícones de Mundo viram um "palco" que revezia sozinho
+
+**Decisão:** pedido explícito do usuário — não gostou do cartão do título (entrada anterior). Pediu, com as próprias palavras: "coloque o título e os ícones dos mundos... ir trocando de lugar com o da bonequinha de tempos em tempos, desaparecendo e aparecendo outro ícone e aparecendo o da bonequinha também". Interpretação implementada: o espaço central da Splash (onde só o Mascote boiava) virou um "palco" — um `AnimatedSwitcher` com fade que revezia, a cada 3 segundos, entre 7 "slides": o título "DEBUGA O MASCOTE", o Mascote, e os 5 ícones ilustrados de Mundo, um de cada vez, em loop contínuo.
+
+**Removida a abordagem anterior de órbita** (`_orbit`/`_orbitingWorldIcon`, ícones girando ao redor do Mascote parado) — substituída por `_stageIndex` (int) + `Timer.periodic(Duration(seconds: 3))`, avançando o índice em `setState` a cada disparo; `AnimatedSwitcher` (`duration: 550ms`, `FadeTransition`) cuida do "desaparece um, aparece outro" sozinho, sem precisar de mais nenhum `AnimationController` manual pra essa parte.
+
+**Título sem moldura própria, ocupando o mesmo espaço do Mascote/ícones**: diferente da entrada anterior (cartão fixo separado), o título agora é só texto centralizado (`FittedBox`) dentro do mesmo `SizedBox` quadrado que os outros slides usam — literalmente troca de lugar com eles, como pedido. Mascote e os 5 ícones continuam com a mesma moldura circular (gradiente `purple`→`purpleDark`, borda `lilac`, sombra dura) que a entrada anterior já tinha introduzido — extraída pra um helper `_framedStage` reaproveitado pelos 6 slides "com moldura".
+
+**Por quê:** pedido explícito do usuário, depois de já ter pedido e reprovado 2 tratamentos anteriores pro mesmo título (linha órfã corrigida, depois cartão com selo).
+
+**Como aplicar:** `flutter analyze` limpo; suíte inteira com **448 specs** passando — 3 novas (`test/screens/no_overflow_test.dart` ganhou uma varredura dos 7 slides do palco em cada tamanho de tela, avançando o relógio falso do teste em passos de 3s; sem isso, o teste de Splash existente só pumpava 500ms — tempo insuficiente pro timer de 3s trocar de slide sequer uma vez — e nunca chegou a exercitar os slides do Mascote/ícones de verdade, só o do título). Pra mudar quantos segundos cada slide fica no ar, é só `_stageDuration` (`splash_view.dart`); pra mudar a ordem/quantidade de slides, `_buildStageSlide`/`_stageCount`.
+
+---
+
+## 2026-09-17 — Abelhinhas decorativas espalhadas no fundo da Splash
+
+**Decisão:** pedido explícito do usuário — espalhar a arte da abelhinha (`assets/images/leaderboard_bee.png`, já usada no estado vazio do Placar Geral) pelo fundo da Splash, em vários tamanhos. Adicionado `_ScatteredBees` (widget privado, `splash_view.dart`), 7 abelhinhas em posições/tamanhos/ângulos variados à mão (não uma grade), posicionadas como fração da tela (`MediaQuery.sizeOf`) pra se distribuir proporcionalmente em qualquer tamanho. Puramente decorativas — opacidade baixa, sem nenhuma animação própria (mesmo cuidado já registrado antes: excesso de movimento simultâneo compete com o botão "JOGAR").
+
+**Ajuste no mesmo pedido:** usuário achou pequenas/apagadas demais — tamanhos subiram de ~24-56px pra ~44-90px, opacidade de ~0.10-0.18 pra ~0.26-0.34.
+
+**Por quê:** pedido explícito do usuário.
+
+**Como aplicar:** `flutter analyze` limpo; suíte inteira (448 specs) continuando a passar sem ajuste de teste (`no_overflow_test.dart` já cobre a Splash, incluindo a varredura dos 7 slides do palco central, nos 3 tamanhos de tela). Pra mudar quantidade/posição/tamanho/opacidade das abelhinhas, é só a lista `_bees` em `splash_view.dart`.
+
+---
+
+## 2026-09-17 — Splash: título volta a ser fixo (à esquerda, com pulso), ícone do Mundo 5 esmaecido no brilho do canto
+
+**Decisão:** sequência de ajustes rápidos do usuário sobre a mesma tela, cada um revertendo/refinando o anterior:
+
+1. "Deixe o nome DEBUGA O MASCOTE centralizado na parte superior e na primeira vez que abrir o app ele vai pular na tela tipo a animação que o botão de jogar está fazendo" — título saiu do revezamento do palco central (voltou a ser um elemento fixo), centralizado, envolto em `PulseTap` (o mesmo widget que já dá o pulso ao botão "JOGAR").
+2. "Tire o nome... de junto dos ícones que tão aparecendo na tela também" — confirmado: já resolvido pelo item 1 (título não faz mais parte de `_buildStageSlide`).
+3. "Coloque para essa mesma animação aparecer esmaecida na bolinha roxa maior da lateral direita superior" — o brilho decorativo do canto (`_glow`) ganhou um eco do palco central (Mascote/ícones revezando) por baixo, em opacidade baixa (0.3) — reaproveitando `_stageContent` (extraído de `_buildStageSlide`, que agora só cuida da moldura).
+4. "Na verdade deixe fixo sempre a imagem do mundo 5 nessa bolinha maior" — o eco revezando foi trocado por um único ícone fixo (Mundo 5 — Modo Debug —, `_stageContent(5, ...)`), sem `AnimatedSwitcher`, ainda esmaecido.
+5. "E coloque o título do jogo alinhado à esquerda mesmo como a frase JOGO DE LÓGICA" — reverteu o item 1: título voltou a alinhar à esquerda (igual à linha "JOGO DE LÓGICA" logo acima, mesmo `crossAxisAlignment: start` da `Column`), mantendo o pulso (`PulseTap`) do item 1.
+
+**Estado final:** título "DEBUGA O MASCOTE" fixo, alinhado à esquerda, com `PulseTap` contínuo (mesma animação do botão "JOGAR"); palco central revezia só entre Mascote e os 5 ícones de Mundo (sem o título); brilho do canto superior direito mostra o ícone do Mundo 5 fixo, esmaecido (opacity 0.3), por baixo da própria pulsação de opacidade/escala do brilho.
+
+**Por quê:** pedidos explícitos do usuário, em sequência — cada mensagem refinando/revertendo a anterior à medida que ele via o resultado.
+
+**Como aplicar:** `flutter analyze` limpo; suíte inteira (448 specs) passando — `test/screens/no_overflow_test.dart` ajustado pra variação de contagem de slides do palco central ao longo do caminho (7 → 6, já que o título saiu do revezamento). `_stageContent(index, size)` (novo, extraído de `_buildStageSlide`) é o ponto único que resolve "qual imagem pro índice N" — reaproveitado tanto pelo palco central (com moldura, via `_framedStage`) quanto pelo eco fixo do canto (sem moldura, só a imagem). Pra trocar qual mundo aparece fixo no canto, é só o número passado em `_stageContent(5, glowSize)`.
+
+---
+
+## 2026-09-17 — Splash: removidas 2 abelhinhas que colidiam com título/brilho; testando sem o círculo roxo por trás do palco central
+
+**Decisão:** 2 ajustes rápidos do usuário sobre a mesma tela:
+
+1. **2 abelhinhas removidas** (`_ScatteredBees._bees`) — a que ficava atrás do título "DEBUGA O MASCOTE" (topo/esquerda) e a que ficava atrás do brilho decorativo do canto (topo/direita), ambas competindo visualmente com esses elementos.
+2. **Círculo roxo (moldura) removido do palco central, a título de teste** ("vamos testar tirar também") — `_framedStage` (gradiente `purple`→`purpleDark`, borda `lilac`, sombra dura) foi removido; `_buildStageSlide` agora só centraliza a imagem (Mascote ou ícone de Mundo) no mesmo espaço, sem nenhum fundo/moldura atrás. Ícones perderam o `ClipOval` (não fazia mais sentido sem a moldura circular pra recortar contra) — `BoxFit.contain` mostra a arte de cada ícone por inteiro, não mais cortada em círculo.
+
+**Por quê:** pedidos explícitos do usuário, o 2º deliberadamente experimental ("vamos testar") — pode ser revertido se não ficar bom.
+
+**Como aplicar:** `flutter analyze` limpo; suíte inteira (448 specs) passando sem ajuste de teste. Se o usuário quiser a moldura circular de volta, reintroduzir `_framedStage` (removido desta vez, não só desconectado) com a mesma decoração de antes.
+
+---
+
+## 2026-09-17 — `world3_icon.png`/`world4_icon.png`: neblina de fundo removida via processamento do canal alfa
+
+**Decisão:** achado real do usuário — "ainda tem alguns ícones com um fundo meio esmaecido branco". Investigado com Python/PIL (histograma do canal alfa dos 2 arquivos): a "neblina" não é conteúdo opaco pintado na imagem (hipótese inicial, registrada numa entrada anterior) — é uma nuvem de pixels com alfa **baixo mas não-zero** (maioria entre 0-76 de 255), completamente separada da arte real do ícone (que fica quase toda entre 230-255) — quase nada no meio (só a faixa de antialiasing da borda). Corrigido programaticamente: todo pixel com alfa < 100 vira 0; a faixa de transição 100-200 (poucos milhares de pixels, borda antialiased) recebe uma pena (`feather`) linear em vez de corte abrupto. Nenhuma mudança de código — só os 2 arquivos PNG foram substituídos.
+
+**Nota sobre verificação:** a pré-visualização de imagem usada durante a investigação continuou mostrando a mesma "neblina" mesmo depois da correção (confirmada via inspeção direta de pixel — a mudança de fato aconteceu, ~650 mil pixels tiveram o alfa zerado). Indício forte de que essa pré-visualização adiciona seu próprio efeito de sombra/vinheta em cima de qualquer imagem com transparência, não reflete com fidelidade o alfa real do arquivo — a correção foi validada pelos números do histograma (bem separados, sem ambiguidade), não pela pré-visualização.
+
+**Por quê:** achado real do usuário, mesmo problema já registrado (sem solução até então) na entrada "Splash redesenhada" — agora resolvido de fato, sem precisar regerar os ícones do zero.
+
+**Como aplicar:** `flutter analyze` limpo (nenhuma mudança de código). Se aparecer neblina parecida em algum ícone futuro gerado por IA, o mesmo diagnóstico (histograma do canal alfa via PIL, threshold ~100-200) provavelmente resolve sem precisar regerar a imagem.
+
+---
+
+## 2026-09-17 — Boas-vindas de 1ª execução (`WelcomeView`): substitui `programmingConceptSlides`, termina em escolha de conta
+
+**Decisão:** pedido explícito do usuário — ao tocar "JOGAR" na Splash pela 1ª vez, o jogador vê 3 slides de boas-vindas (`welcomeSlides`, `lib/widgets/tutorial_content.dart`: 2 com a abelhinha guia, 1 com o Mascote) antes de entrar na Seleção de Mundo, terminando não num botão único de "continuar", mas numa escolha de conta — criar conta, entrar numa conta existente, ou jogar sem conta. Isso **substitui** o antigo `programmingConceptSlides` (o "conceito geral de programação" mostrado antes do tutorial do 1º Mundo tocado) — decisão confirmada com o usuário via pergunta direta; os tutoriais por Mundo (`worldTutorials`) continuam existindo e inalterados, só a intro geral saiu.
+
+**Personagens ganharam nome** (também pedido explícito do usuário, "eles podem se apresentar com os nomes deles"): a abelhinha guia se chama **Libug**, o Mascote se chama **Lili** — os 2 primeiros slides (Libug) e o 3º (Lili) se apresentam pelo nome no próprio texto. O nome do app no dispositivo (ícone da tela inicial) também virou **"Libug"** — `android:label` (`AndroidManifest.xml`), `CFBundleDisplayName` (`ios/Runner/Info.plist`), `name`/`short_name` (`web/manifest.json`), `<title>`/`apple-mobile-web-app-title` (`web/index.html`). O nome interno do jogo ("Debuga o Mascote") não mudou em nenhum outro lugar — título da Splash, `CFBundleName`, `meta description` — só o rótulo que aparece embaixo do ícone no dispositivo.
+
+**`TutorialView` estendida** (não uma tela nova do zero) pra suportar este fluxo, sem quebrar os usos existentes (tutorial por Mundo, recapitulação):
+- `TutorialSlide` ganhou `imageAsset` (`String`, default `assets/images/mascot_tutorial.png`) — antes a imagem do Mascote era hardcoded dentro de `TutorialView`; `welcomeSlides` passa `assets/images/leaderboard_bee.png` nos 2 primeiros slides.
+- `TutorialView` ganhou `finalActionsBuilder: WidgetBuilder?` — quando presente, substitui o botão primário do último slide (só depois do texto inteiro revelado) por um conteúdo próprio. Enquanto o texto ainda "digita", o toque na área do slide continua só revelando na hora (não avança/termina) — com `finalActionsBuilder` setado, o toque na área do slide deixa de terminar o fluxo sozinho no último slide; as escolhas explícitas passam a ser a única saída.
+- `WelcomeView` (`lib/features/welcome/presentation/welcome_view.dart`, `ConsumerWidget` sem ViewModel — só orquestra navegação/`markWelcomeSeen`, ver `.claude/rules/architecture.md`) embrulha `TutorialView(slides: welcomeSlides, ...)` e fornece esse `finalActionsBuilder`: "Criar conta" e "Já tenho conta" lado a lado (mesmo peso visual — pedido explícito do usuário, nenhuma das duas é "secundária" o bastante pra virar só um link) + "Jogar sem conta" como link discreto abaixo.
+
+**`OnboardingState.seenIntro` renomeado para `seenWelcome`** (`markIntroSeen` → `markWelcomeSeen`) — mesmo campo, nome que reflete a feature nova. `tutorialSlidesFor(worldNumber)` perdeu o parâmetro `includeIntro` (não existe mais "incluir a intro geral opcionalmente" — ela não mora mais dentro do tutorial de Mundo). `WorldSelectView._enterWorld` simplificado: não checa mais `seenIntro`/monta lista combinada, só decide entre "Mundo já visto → abre direto" e "Mundo novo → mostra `TutorialView` daquele Mundo".
+
+**`RegisterView`/`RegisterViewModel` ganharam `initialMode`/`setMode`** — `WelcomeView` abre o cadastro já em modo `login` quando o jogador escolhe "Já tenho conta" (em vez de exigir um toque extra em "Já tem conta? Entrar" dentro do formulário). **Achado real ao testar**: chamar `ref.read(registerViewModelProvider.notifier).setMode(...)` direto em `initState()` lança "Tried to modify a provider while the widget tree was building" (Riverpod proíbe mutar provider durante o build da árvore, e `initState` roda nesse momento) — corrigido adiando a chamada com `WidgetsBinding.instance.addPostFrameCallback`.
+
+**Ícone do app trocado para a abelhinha (Libug) sobre fundo roxo** (`AppColors.purple`, `#6D3DF5`) — pedido explícito do usuário, mesmo espírito de "PWA com marca própria" (ver entrada anterior) mas agora cobrindo também os ícones nativos (Android `mipmap-*`, iOS `AppIcon.appiconset`), que usavam o Mascote genérico do `flutter create` até então. Gerado por um script Python/PIL one-off (não comitado, mesmo padrão de `tool/generate_sfx.py`): recorta `assets/images/leaderboard_bee.png` pro bounding box real do conteúdo, compõe sobre fundo roxo sólido com respiro (14% nos ícones normais, 22% nos maskable do Android/PWA — margem de segurança maior pro corte circular de alguns launchers), e achata pra RGB opaco nos ícones nativos (iOS/Android rejeitam alfa no ícone principal).
+
+**Por quê:** pedido explícito do usuário, em 3 mensagens da mesma sessão — o fluxo de boas-vindas em si, depois a correção de um bug real encontrado ao testar (login não abria), depois o pedido de nome/ícone.
+
+**Como aplicar:** `flutter analyze` limpo; `flutter test` com as 447 specs passando (`test/screens/tutorial_flow_test.dart` reescrito nos casos que dependiam do conceito geral; `test/screens/no_overflow_test.dart` ganhou `WelcomeView` na varredura genérica de telas + uma varredura dedicada do último slide com as escolhas de conta + `welcomeSlides` na varredura de slides isolados, no lugar de `programmingConceptSlides`). Se o app ganhar mais personagens nomeados no futuro, seguir o mesmo padrão de apresentação (nome no próprio texto do slide, não um campo estrutural novo em `TutorialSlide`) — não há necessidade de modelar "nome do personagem" como dado agora, só 2 personagens existem e não mudam de nome dependendo do contexto.
+
+---
+
+## 2026-09-17 — Ícone do app com mais respiro removido (abelhinha maior); Configurações vira tela cheia com avatar/nome de usuário editáveis (só com conta)
+
+**Decisão:** dois pedidos explícitos do usuário na mesma sessão:
+
+1. **Ícone do app — abelhinha maior.** O padding usado pelo script de geração (entrada anterior, "Ícone do app trocado para a abelhinha") foi reduzido — ícones nativos (Android/iOS) de 14%→4%, favicon/ícones web normais de 12%→3%, maskable de 22%→15% (ainda com mais respiro que os normais, pela margem de segurança do corte circular de alguns launchers Android). Só os 25 arquivos PNG foram regerados — nenhuma mudança de código.
+
+2. **`SettingsDialog` (um `Dialog` modal) virou `SettingsView`, tela cheia** (`lib/features/settings/presentation/settings_view.dart`, aberta por `Navigator.push` a partir do botão de engrenagem da Seleção de Mundo, no lugar do antigo `showDialog`) — pedido explícito do usuário, com um círculo de avatar no topo (o personagem escolhido pelo jogador) e um lápis sobreposto que abre uma tela nova de "Configuração de usuário" (`ProfileEditView`, `lib/features/settings/presentation/profile_edit_view.dart`): edita o nome de exibição e escolhe a foto de perfil num carrossel horizontal de personagens — mostrados também no Placar Geral, ao lado do nome de cada entrada do ranking.
+
+   - **Novo modelo `CharacterAvatar`** (`lib/models/character_avatar.dart`, Dart puro) — só **2 opções hoje** (Lili = `assets/images/mascot.png`, Libug = `assets/images/leaderboard_bee.png`, as únicas artes de personagem prontas); o usuário vai enviar mais imagens de personagem depois — adicionar uma é só um item a mais em `characterAvatars`, nenhuma tela precisa mudar. `CharacterAvatarCircle` (`lib/widgets/character_avatar_widget.dart`) é o widget reutilizável (mesma técnica de `ClipOval`+`BoxFit.cover` já usada em `ZigzagMapNode`).
+   - **`ProgressState` ganhou `username`/`avatarId`** (ambos `String?`, `null` = ainda não escolhido — `displayAvatarId` resolve pro personagem padrão do jogo, `defaultAvatarId = 'lili'`), sincronizados com o Firestore (`FirestoreProgressRepository`) do mesmo jeito que os outros campos de perfil — mesmo motivo de todos os outros dados de conta já morarem em `ProgressState`/`players/{uid}`, não um lugar novo. `mergedWith` (login numa conta com progresso de outro aparelho) segue o mesmo critério de `surveyAge`/`surveyHasProgrammedBefore`: fica com o valor já escolhido deste lado, cai pro do outro lado se ainda não escolheu.
+   - **`LeaderboardEntry` ganhou `avatarId`** (default `defaultAvatarId`, pra documentos salvos antes deste campo existir não quebrarem) — `LeaderboardSyncService.resync()` usa `progress.username ?? auth.displayName ?? 'Jogador'` como nome (username escolhido tem prioridade sobre o nome/e-mail da conta) e `progress.displayAvatarId` como avatar.
+   - **Nome/foto só editáveis por quem tem conta** — pedido explícito do usuário ("o usuário só vai poder escolher se ele se cadastrar"): o lápis de `SettingsView` só aparece com `AuthService.hasAccount == true` (sem conta, não haveria onde persistir a escolha além da sessão atual, e a tela de Placar já é gated por conta do mesmo jeito).
+   - **"Sair da conta" saiu da linha "Conectado como X" e virou um link no fim da tela** (com ícone `Icons.logout`) — pedido explícito do usuário ("na parte inferior coloque uma mensagem de sair da conta"), em vez do link pequeno "Sair" que ficava colado ao nome da conta.
+
+**Achado real ao escrever o teste de fluxo (`test/screens/settings_flow_test.dart`):** `Navigator.push`/`pop` reais (diferente do antigo `showDialog`) usam a transição padrão de página do Material 3, que não termina num único `pump()` — um toque que dispara navegação seguido de só `await tester.pump()` deixa a tela de destino com a geometria transitória da animação (fora da área visível da superfície de teste), e um toque nela erra o alvo com um aviso de "hit test" silencioso. Mesmo cuidado que `test/screens/tutorial_flow_test.dart` já tinha documentado (`pumpTransition`, pump em pedaços de 100ms) — replicado aqui para qualquer navegação de/para `SettingsView`/`ProfileEditView`/`RegisterView`.
+
+**Por quê:** pedidos explícitos do usuário, em mensagens sucessivas da mesma sessão.
+
+**Como aplicar:** `flutter analyze` limpo; `flutter test` com **459 specs** passando (`test/screens/settings_flow_test.dart` substitui `test/screens/settings_dialog_test.dart`; `test/core/progress/progress_notifier_test.dart` ganhou cobertura de `setUsername`/`setAvatarId`/`displayAvatarId`/merge; `test/screens/no_overflow_test.dart` ganhou `SettingsView`/`ProfileEditView` na varredura de telas). Se o usuário mandar mais artes de personagem, só adicionar em `characterAvatars` — nenhuma tela muda. Regenerar os ícones do app de novo é só rodar o mesmo script Python one-off (não comitado, ver entrada anterior) com um `padding_frac` diferente.

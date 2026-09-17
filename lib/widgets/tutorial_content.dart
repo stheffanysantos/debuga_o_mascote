@@ -1,69 +1,60 @@
-/// Conteúdo textual do tutorial, mostrado por `TutorialScreen`
-/// (`lib/screens/tutorial_screen.dart`). Texto já revisado contra as regras
-/// reais de cada motor — não alterar sem confirmar com o usuário (ver
-/// `.claude/memory/decisions.md`). Se o texto de um slide mudar, a narração
-/// gerada em `assets/audio/tutorial/` (`tool/generate_tutorial_narration.py`)
-/// precisa ser regerada — os dois ficam dessincronizados senão.
+/// Conteúdo textual do tutorial, mostrado por `TutorialView`
+/// (`lib/features/tutorial/presentation/tutorial_view.dart`). Texto já
+/// revisado contra as regras reais de cada motor — não alterar sem
+/// confirmar com o usuário (ver `.claude/memory/decisions.md`). Se o texto
+/// de um slide mudar, a narração gerada em `assets/audio/tutorial/`
+/// (`tool/generate_tutorial_narration.py`) precisa ser regerada — os dois
+/// ficam dessincronizados senão.
 class TutorialSlide {
   /// `null` num slide de continuação (só o corpo, sem título novo).
   final String? title;
   final String body;
 
-  const TutorialSlide({this.title, required this.body});
+  /// Arte mostrada acima do texto — o Mascote por padrão (`worldTutorials`/
+  /// `worldRecapSlides`); `welcomeSlides` usa a abelhinha em 2 dos 3 slides
+  /// (`assets/images/leaderboard_bee.png`), pedido explícito do usuário.
+  final String imageAsset;
+
+  const TutorialSlide({this.title, required this.body, this.imageAsset = 'assets/images/mascot_tutorial.png'});
 }
-
-/// Mostrado uma única vez, antes do tutorial do primeiro Mundo que o
-/// jogador tocar (ver `Onboarding.hasSeenIntro`) — explica o conceito geral
-/// de "programar" antes de entrar nas regras de um Mundo específico.
-const programmingConceptSlides = <TutorialSlide>[
-  TutorialSlide(
-    title: 'O que é programar?',
-    body: 'Programar é dar instruções, uma de cada vez, pra alguém seguir certinho.',
-  ),
-  TutorialSlide(
-    body: 'Cada instrução é um Bloco — tipo uma peça de encaixe.',
-  ),
-  TutorialSlide(
-    body: 'Você junta os Blocos em ordem pra montar um Programa.',
-  ),
-  TutorialSlide(
-    body: 'Quem executa o Programa só faz exatamente o que você mandou. A ordem importa!',
-  ),
-  TutorialSlide(
-    body: 'Errou? Sem problema — ajuste o Programa e tente de novo.',
-  ),
-];
-
-/// Caminho (relativo a `assets/audio/`) do arquivo de narração de um slide
-/// do tutorial — `null` se esse tipo de slide não tiver narração gerada
-/// (hoje todos têm; a checagem de existência real do asset é feita ao
-/// tentar tocar, ver `AppSounds.playNarration`). Índice é a posição do
-/// slide dentro da sua própria lista (`programmingConceptSlides` ou
-/// `worldTutorials[worldNumber]`), não da lista combinada mostrada na tela.
-String _introNarrationAsset(int index) => 'tutorial/intro_$index.mp3';
 
 String _worldNarrationAsset(int worldNumber, int index) => 'tutorial/world${worldNumber}_$index.mp3';
 
-/// Monta a lista combinada de slides (intro geral + slides do Mundo) e a
-/// lista paralela de trilhas de narração, na ordem em que `TutorialScreen`
-/// deve mostrar/tocar — usado por `WorldSelectScreen`/telas de Seleção de
-/// Fases para não duplicar essa composição em cada chamador.
-({List<TutorialSlide> slides, List<String> narrationAssets}) tutorialSlidesFor(int worldNumber, {required bool includeIntro}) {
-  final slides = <TutorialSlide>[];
-  final narrationAssets = <String>[];
-  if (includeIntro) {
-    for (var i = 0; i < programmingConceptSlides.length; i++) {
-      slides.add(programmingConceptSlides[i]);
-      narrationAssets.add(_introNarrationAsset(i));
-    }
-  }
+/// Monta os slides + narração do tutorial de um Mundo — usado por
+/// `WorldSelectView`/telas de Seleção de Fases para não duplicar essa
+/// composição em cada chamador.
+({List<TutorialSlide> slides, List<String> narrationAssets}) tutorialSlidesFor(int worldNumber) {
   final worldSlides = worldTutorials[worldNumber] ?? const [];
-  for (var i = 0; i < worldSlides.length; i++) {
-    slides.add(worldSlides[i]);
-    narrationAssets.add(_worldNarrationAsset(worldNumber, i));
-  }
-  return (slides: slides, narrationAssets: narrationAssets);
+  final narrationAssets = [for (var i = 0; i < worldSlides.length; i++) _worldNarrationAsset(worldNumber, i)];
+  return (slides: worldSlides, narrationAssets: narrationAssets);
 }
+
+/// Intro de boas-vindas — mostrado uma única vez (`OnboardingState.seenWelcome`),
+/// ao tocar "JOGAR" na Splash pela 1ª vez, antes de entrar na Seleção de
+/// Mundo. Explica o que é o jogo e como ele funciona (2 slides com a
+/// abelhinha, que se apresenta como "Libug") e termina com o Mascote
+/// ("Lili") pedindo pro jogador escolher entre criar conta, entrar numa
+/// conta existente, ou jogar sem conta (`WelcomeView`, que mostra os
+/// botões de escolha no lugar do botão "Próximo" no último slide).
+/// Substitui o antigo `programmingConceptSlides` (mostrado por Mundo) —
+/// pedido explícito do usuário, ver `.claude/memory/decisions.md`.
+/// Sem narração gerada ainda (`TutorialView` tolera `narrationAssets`
+/// vazio, só não toca nada).
+const welcomeSlides = <TutorialSlide>[
+  TutorialSlide(
+    title: 'Oi, eu sou o Libug!',
+    body: 'Sou a abelhinha guia do jogo — vou te acompanhar por aqui! Debuga o Mascote é um mini-jogo de lógica de programação: você ajuda o Mascote a resolver desafios usando comandos, como um programador de verdade.',
+    imageAsset: 'assets/images/leaderboard_bee.png',
+  ),
+  TutorialSlide(
+    body: 'Em cada mundo você monta uma sequência de comandos e aperta Play pra ver o que acontece. Errou? Sem problema — aqui errar faz parte de aprender.',
+    imageAsset: 'assets/images/leaderboard_bee.png',
+  ),
+  TutorialSlide(
+    title: 'Oi, eu sou a Lili!',
+    body: 'Eu sou a mascote do jogo! Vamos começar? Você pode criar uma conta pra salvar seu progresso e aparecer no Placar, entrar numa conta que já tem, ou jogar sem se cadastrar — do jeito que preferir.',
+  ),
+];
 
 const worldTutorials = <int, List<TutorialSlide>>{
   1: [
@@ -79,6 +70,18 @@ const worldTutorials = <int, List<TutorialSlide>>{
     TutorialSlide(body: 'Classifique toda a fila certinho para vencer — errar a cor é falha.'),
   ],
   3: [
+    TutorialSlide(title: 'Como jogar: Preveja a Saída', body: 'Vamos aprender rapidinho:'),
+    TutorialSlide(body: 'Você vai ler um trecho de código de verdade, já pronto — sem montar nada.'),
+    TutorialSlide(body: 'Depois de ler, escolha entre as opções qual é o resultado.'),
+    TutorialSlide(body: "Confirme sua resposta — aqui não existe 'quase certo', só certo ou errado."),
+  ],
+  4: [
+    TutorialSlide(title: 'Como jogar: Complete o Código', body: 'Vamos aprender rapidinho:'),
+    TutorialSlide(body: 'O código tem um espaço em branco no lugar de uma linha.'),
+    TutorialSlide(body: 'Toque na linha, entre as opções, que completa certo o espaço em branco.'),
+    TutorialSlide(body: "Confirme sua resposta — aqui não existe 'quase certo', só certo ou errado."),
+  ],
+  5: [
     TutorialSlide(title: 'Como jogar: Modo Debug', body: 'Vamos aprender rapidinho:'),
     TutorialSlide(body: "Em 'Reordenar', toque nas linhas de código na ordem certa."),
     TutorialSlide(body: "Em 'Achar o Bug', toque na linha que tem o erro."),
@@ -100,13 +103,25 @@ const worldRecapSlides = <int, List<TutorialSlide>>{
   2: [
     TutorialSlide(
       title: 'Mundo 2 completo!',
-      body: 'Você aprendeu Se e Enquanto — decisão e repetição condicional. Agora vem o mais parecido com programar de verdade: ler e consertar código!',
+      body: 'Você aprendeu Se e Enquanto — decisão e repetição condicional. Agora vem o mais parecido com programar de verdade: ler código!',
     ),
   ],
   3: [
     TutorialSlide(
-      title: 'Você terminou os 3 Mundos!',
-      body: 'Sequência, decisão, repetição e leitura de código — você já pensa como um programador!',
+      title: 'Trilha 1 completa!',
+      body: 'Você já lê código de verdade e prevê o resultado. Agora vem a Trilha Avançada — lá você vai completar e depurar código de verdade!',
+    ),
+  ],
+  4: [
+    TutorialSlide(
+      title: 'Mundo 4 completo!',
+      body: 'Você já sabe completar código de verdade. Agora vem o Modo Debug — juntar tudo: reordenar e achar bugs em código real!',
+    ),
+  ],
+  5: [
+    TutorialSlide(
+      title: 'Você terminou os 5 Mundos!',
+      body: 'Sequência, decisão, repetição, leitura, escrita e depuração de código — você já pensa como um programador!',
     ),
   ],
 };

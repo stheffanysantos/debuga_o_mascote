@@ -7,13 +7,13 @@ import 'icon_action_button_widget.dart';
 
 /// Cabeçalho da Gameplay — voltar, "FASE N" + título, chip final opcional.
 /// Reaproveitado por `GameplayScreen` (Mundo 1), `ConveyorGameplayScreen`
-/// (Mundo 2) e `CodePuzzleGameplayScreen` (Mundo 3); extraído para não
+/// (Mundo 2) e `CodePuzzleGameplayScreen` (Mundo 5); extraído para não
 /// duplicar a mesma árvore de widgets nos 3 motores. Sem botão de mute —
-/// o som só é controlado pelo `SettingsDialog` da Splash agora (ver
+/// o som só é controlado pela `SettingsView` da Seleção de Mundo agora (ver
 /// `.claude/memory/decisions.md`).
 ///
 /// O chip final é um texto livre (`trailingChipText`) em vez de
-/// `blocksUsed`/`maxBlocks` fixos — o Mundo 3 não tem "blocos", mostra a
+/// `blocksUsed`/`maxBlocks` fixos — o Mundo 5 não tem "blocos", mostra a
 /// tentativa atual ali (ver `.claude/memory/decisions.md`). `null` esconde
 /// o chip inteiro.
 class GameplayHeader extends StatelessWidget {

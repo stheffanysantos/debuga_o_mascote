@@ -1,18 +1,17 @@
-// Esqueleto de tela. Ver .claude/rules/architecture.md (sem regra de jogo aqui)
-// e .claude/rules/design.md (zero hardcode de cor/tipografia).
+// Esqueleto de View trivial (sem ViewModel — ver .claude/rules/architecture.md,
+// "Quando dar ViewModel a uma tela"). Para uma tela com orquestração real,
+// crie também <nome>_state.dart (@freezed) e <nome>_view_model.dart (@riverpod)
+// e leia o estado aqui via ref.watch(exampleViewModelProvider).
+// Ver .claude/rules/design.md (zero hardcode de cor/tipografia).
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ExampleScreen extends StatefulWidget {
-  const ExampleScreen({super.key});
+class ExampleView extends ConsumerWidget {
+  const ExampleView({super.key});
 
   @override
-  State<ExampleScreen> createState() => _ExampleScreenState();
-}
-
-class _ExampleScreenState extends State<ExampleScreen> {
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: SafeArea(
         child: Center(

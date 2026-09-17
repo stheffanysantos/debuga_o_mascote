@@ -1,42 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:debuga_o_mascote/data/app_auth.dart';
-import 'package:debuga_o_mascote/data/leaderboard.dart';
+import 'package:debuga_o_mascote/core/auth/auth_providers.dart';
+import 'package:debuga_o_mascote/core/leaderboard/leaderboard_providers.dart';
+import 'package:debuga_o_mascote/core/progress/progress_notifier.dart';
 import 'package:debuga_o_mascote/models/leaderboard_entry.dart';
-import 'package:debuga_o_mascote/models/progress.dart';
-import 'package:debuga_o_mascote/screens/leaderboard_screen.dart';
-import 'package:debuga_o_mascote/screens/register_screen.dart';
-import 'package:debuga_o_mascote/screens/survey_screen.dart';
-import 'package:debuga_o_mascote/screens/world_select_screen.dart';
+import 'package:debuga_o_mascote/features/leaderboard/presentation/leaderboard_view.dart';
+import 'package:debuga_o_mascote/features/auth/presentation/register/register_view.dart';
+import 'package:debuga_o_mascote/features/survey/presentation/survey_view.dart';
+import 'package:debuga_o_mascote/features/world_select/presentation/world_select_view.dart';
 import 'package:debuga_o_mascote/widgets/icon_action_button_widget.dart';
 import 'package:debuga_o_mascote/widgets/primary_pill_button_widget.dart';
 
 import '../helpers/fake_auth_service.dart';
 import '../helpers/fake_leaderboard_repository.dart';
+import '../helpers/test_container.dart';
 
-/// Fluxo do Placar do Dia (`LeaderboardScreen`) e da Pesquisa opcional
-/// (`SurveyScreen`, idade/já programou — o nome vem da conta logada, não é
+/// Fluxo do Placar do Dia (`LeaderboardView`) e da Pesquisa opcional
+/// (`SurveyView`, idade/já programou — o nome vem da conta logada, não é
 /// mais digitado) — ver `.claude/memory/decisions.md`.
 void main() {
   late FakeLeaderboardRepository fakeRepository;
-  late FakeAuthService fakeAuth;
 
   setUp(() {
     fakeRepository = FakeLeaderboardRepository();
-    Leaderboard.instance.repository = fakeRepository;
-    fakeAuth = FakeAuthService();
-    AppAuth.instance.service = fakeAuth;
-    Progress.instance.reset();
   });
 
-  tearDown(() {
-    Leaderboard.instance.resetForTest();
-    AppAuth.instance.resetForTest();
-  });
+  ProviderContainer buildContainer({FakeAuthService? auth}) => createTestContainer(overrides: [
+        leaderboardRepositoryProvider.overrideWithValue(fakeRepository),
+        authServiceProvider.overrideWithValue(auth ?? FakeAuthService()),
+      ]);
 
   testWidgets('ícone de troféu na Seleção de Mundo abre o Placar do Dia', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: WorldSelectScreen()));
+    final container = buildContainer();
+    await tester.pumpWidget(wrapForTest(container, const WorldSelectView()));
     await tester.pump();
 
     // Cabeçalho: voltar (0), Placar (1), configurações (2).
@@ -44,25 +42,25 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.byType(LeaderboardScreen), findsOneWidget);
+    expect(find.byType(LeaderboardView), findsOneWidget);
   });
 
   testWidgets('Placar sem pontuação de sessão não mostra o convite pra pesquisa', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: LeaderboardScreen()));
+    final container = buildContainer();
+    await tester.pumpWidget(wrapForTest(container, const LeaderboardView()));
     await tester.pump();
     await tester.pump();
 
     expect(find.text('Aparecer no Placar'), findsNothing);
     expect(find.text('Entrar e aparecer no Placar'), findsNothing);
-    expect(find.textContaining('Ninguém no Placar ainda hoje'), findsOneWidget);
+    expect(find.textContaining('Ninguém no Placar ainda'), findsOneWidget);
   });
 
   testWidgets('Placar com pontuação de sessão e conta já logada leva direto pra Pesquisa', (tester) async {
-    fakeAuth = FakeAuthService(hasAccount: true, displayName: 'Ana');
-    AppAuth.instance.service = fakeAuth;
-    Progress.instance.addSessionPoints(450);
+    final container = buildContainer(auth: FakeAuthService(hasAccount: true, displayName: 'Ana'));
+    container.read(progressNotifierProvider.notifier).addSessionPoints(450);
 
-    await tester.pumpWidget(const MaterialApp(home: LeaderboardScreen()));
+    await tester.pumpWidget(wrapForTest(container, const LeaderboardView()));
     await tester.pump();
     await tester.pump();
 
@@ -72,13 +70,14 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.byType(SurveyScreen), findsOneWidget);
+    expect(find.byType(SurveyView), findsOneWidget);
   });
 
   testWidgets('Placar com pontuação de sessão sem conta pede login antes da Pesquisa', (tester) async {
-    Progress.instance.addSessionPoints(450);
+    final container = buildContainer();
+    container.read(progressNotifierProvider.notifier).addSessionPoints(450);
 
-    await tester.pumpWidget(const MaterialApp(home: LeaderboardScreen()));
+    await tester.pumpWidget(wrapForTest(container, const LeaderboardView()));
     await tester.pump();
     await tester.pump();
 
@@ -86,8 +85,8 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.byType(RegisterScreen), findsOneWidget);
-    expect(find.byType(SurveyScreen), findsNothing);
+    expect(find.byType(RegisterView), findsOneWidget);
+    expect(find.byType(SurveyView), findsNothing);
 
     // Login com Google (1 toque, fake) — depois disso deve cair na Pesquisa.
     final googleButton = find.text('Continuar com Google');
@@ -97,15 +96,14 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.byType(RegisterScreen), findsNothing);
-    expect(find.byType(SurveyScreen), findsOneWidget);
+    expect(find.byType(RegisterView), findsNothing);
+    expect(find.byType(SurveyView), findsOneWidget);
   });
 
   testWidgets('botão "Ver meu Placar" só habilita com idade e resposta preenchidos', (tester) async {
-    fakeAuth = FakeAuthService(hasAccount: true, displayName: 'Ana');
-    AppAuth.instance.service = fakeAuth;
-    Progress.instance.addSessionPoints(450);
-    await tester.pumpWidget(const MaterialApp(home: SurveyScreen()));
+    final container = buildContainer(auth: FakeAuthService(hasAccount: true, displayName: 'Ana'));
+    container.read(progressNotifierProvider.notifier).addSessionPoints(450);
+    await tester.pumpWidget(wrapForTest(container, const SurveyView()));
     await tester.pump();
 
     PrimaryPillButton primaryButton() => tester.widget<PrimaryPillButton>(find.byType(PrimaryPillButton));
@@ -121,10 +119,9 @@ void main() {
   });
 
   testWidgets('enviar a pesquisa registra a entrada no Placar (nome da conta) e navega mostrando o ranking', (tester) async {
-    fakeAuth = FakeAuthService(hasAccount: true, displayName: 'Ana');
-    AppAuth.instance.service = fakeAuth;
-    Progress.instance.addSessionPoints(450);
-    await tester.pumpWidget(const MaterialApp(home: SurveyScreen()));
+    final container = buildContainer(auth: FakeAuthService(hasAccount: true, displayName: 'Ana'));
+    container.read(progressNotifierProvider.notifier).addSessionPoints(450);
+    await tester.pumpWidget(wrapForTest(container, const SurveyView()));
     await tester.pump();
 
     expect(find.textContaining('Ana'), findsOneWidget, reason: 'mostra pra que nome da conta vai enviar');
@@ -148,21 +145,60 @@ void main() {
     expect(entry.age, 10);
     expect(entry.hasProgrammedBefore, isTrue);
     expect(entry.score, 450);
-    expect(Progress.instance.hasSubmittedToLeaderboard, isTrue);
+    expect(container.read(progressNotifierProvider).hasSubmittedToLeaderboard, isTrue);
 
-    expect(find.byType(LeaderboardScreen), findsOneWidget);
+    expect(find.byType(LeaderboardView), findsOneWidget);
     expect(find.text('Ana'), findsOneWidget);
     expect(find.text('450'), findsOneWidget);
   });
 
-  testWidgets('ranking mostra as entradas de hoje ordenadas da maior pontuação pra menor', (tester) async {
+  testWidgets('depois de enviar a pesquisa, o Placar recém-aberto já mostra a entrada (sem precisar sair e voltar)', (tester) async {
+    // Fluxo real (não pula direto pra `SurveyView` isolada, como o teste
+    // acima) — a `LeaderboardView` original continua montada por baixo na
+    // pilha do `Navigator` quando `SurveyView` é empurrada, exatamente como
+    // acontece de verdade no app (achado real do usuário: "por que no
+    // placar não está aparecendo meu nome?" — `leaderboardViewModelProvider`
+    // não é `.family`, e sem `ref.invalidate` antes do `pushReplacement`, a
+    // tela nova reusava o resultado cacheado de ANTES do envio, ver
+    // `.claude/memory/decisions.md`).
+    final container = buildContainer(auth: FakeAuthService(hasAccount: true, displayName: 'Ana'));
+    container.read(progressNotifierProvider.notifier).addSessionPoints(450);
+
+    await tester.pumpWidget(wrapForTest(container, const LeaderboardView()));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.textContaining('Ninguém no Placar ainda'), findsOneWidget);
+
+    await tester.tap(find.text('Aparecer no Placar'));
+    await tester.pump();
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField), '10');
+    await tester.tap(find.text('Sim'));
+    await tester.pump();
+    // A `LeaderboardView` anterior continua montada por baixo (offstage) —
+    // "Aparecer no Placar" dela também é um `PrimaryPillButton`, então
+    // precisa achar pelo texto específico do botão da `SurveyView`.
+    await tester.tap(find.text('Ver meu Placar'));
+    await tester.pump();
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(find.byType(LeaderboardView), findsWidgets);
+    expect(find.text('Ana'), findsOneWidget, reason: 'placar recém-aberto precisa refletir o envio na hora, não a busca antiga cacheada');
+  });
+
+  testWidgets('ranking mostra as entradas ordenadas da maior pontuação pra menor', (tester) async {
     final now = DateTime.now();
     fakeRepository.entries.addAll([
-      LeaderboardEntry(name: 'Beto', age: 12, hasProgrammedBefore: false, score: 300, submittedAt: now),
-      LeaderboardEntry(name: 'Ana', age: 10, hasProgrammedBefore: true, score: 900, submittedAt: now),
+      LeaderboardEntry(name: 'Beto', age: 12, hasProgrammedBefore: false, score: 300, updatedAt: now),
+      LeaderboardEntry(name: 'Ana', age: 10, hasProgrammedBefore: true, score: 900, updatedAt: now),
     ]);
 
-    await tester.pumpWidget(const MaterialApp(home: LeaderboardScreen()));
+    final container = buildContainer();
+    await tester.pumpWidget(wrapForTest(container, const LeaderboardView()));
     await tester.pump();
     await tester.pump();
 

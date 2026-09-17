@@ -1,12 +1,12 @@
 import 'scoring.dart';
 
-/// Estrelas/pontos do Mundo 3 ("Modo Debug"), calculados por número de
+/// Estrelas/pontos do Mundo 5 ("Modo Debug"), calculados por número de
 /// **tentativas** até acertar — diferente da fórmula de `computeScore`
 /// (Mundos 1/2, `lib/game/scoring.dart`, blocos usados vs. ótimo da fase).
 /// Reaproveita `ScoreResult` (mesmo formato de saída, `stars`/`points`) em
 /// vez de criar um tipo novo, já que o consumidor (tela de Resultado) só
 /// precisa de estrelas/pontos, não importa a origem do cálculo. Ver
-/// `.claude/docs/GAME_DESIGN.md`, seção "Mundo 3 — Modo Debug".
+/// `.claude/docs/GAME_DESIGN.md`, seção "Mundo 5 — Modo Debug".
 ///
 /// - 3 estrelas: acertou na 1ª tentativa.
 /// - 2 estrelas: acertou na 2ª tentativa.
@@ -24,7 +24,7 @@ ScoreResult computeCodePuzzleScore({required int attempts}) {
     stars = 1;
   }
 
-  final points = (300 - extra * 100).clamp(50, 300);
+  final points = (maxLevelPoints - extra * 100).clamp(50, maxLevelPoints);
 
   return ScoreResult(stars: stars, points: points);
 }

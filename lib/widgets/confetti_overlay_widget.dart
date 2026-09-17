@@ -4,7 +4,7 @@ import '../theme/app_colors.dart';
 
 /// Camada de confete caindo em loop — extraída de `VictoryScreen` (era
 /// `_ConfettiPainter` inline) para ser reaproveitada por
-/// `CodePuzzleResultScreen` (Mundo 3) sem duplicar a animação. Autocontido:
+/// `CodePuzzleResultScreen` (Mundo 5) sem duplicar a animação. Autocontido:
 /// gerencia seu próprio `AnimationController`/`dispose` — quem usa só
 /// coloca `const ConfettiOverlay()` dentro de um `Stack`, sem precisar de
 /// `TickerProviderStateMixin` externo. Ver `.claude/memory/design-system.md`.

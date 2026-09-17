@@ -1,7 +1,9 @@
 import 'block.dart';
 import 'code_puzzle_level.dart';
+import 'complete_code_level.dart';
 import 'conveyor_level.dart';
 import 'game_level.dart';
+import 'predict_output_level.dart';
 
 /// Direção para a qual o Mascote está olhando. A ordem importa: gira em
 /// sentido horário (right -> down -> left -> up -> right).
@@ -338,9 +340,23 @@ final demoLevel = world1Levels[5];
 
 /// Motor de jogo usado por um `GameWorld` — cada mundo é um mini-jogo de
 /// lógica diferente (ver `.claude/docs/GAME_DESIGN.md` e
-/// `.claude/plans/Mundos.md`). Só `maze` (Mundo 1) tem motor
-/// implementado hoje; `conveyor`/`codePuzzle` chegam nas Etapas 2/3.
-enum WorldGameType { maze, conveyor, codePuzzle }
+/// `.claude/plans/Mundos.md`).
+enum WorldGameType {
+  maze,
+  conveyor,
+
+  /// Mundo 3 ("Preveja a Saída") — lê um trecho de código real e prevê o
+  /// resultado por múltipla escolha. `PredictOutputLevel`.
+  predictOutput,
+
+  /// Mundo 4 ("Complete o Código") — escolhe qual linha preenche um espaço
+  /// em branco num trecho de código real. `CompleteCodeLevel`.
+  completeCode,
+
+  /// Mundo 5 ("Modo Debug") — reordena linhas embaralhadas ou acha a linha
+  /// com o bug. `CodePuzzleLevel`.
+  codePuzzle,
+}
 
 /// Um mundo da Seleção de Fases: agrupa `Level`s do mesmo mini-jogo. Ver
 /// `.claude/memory/domain-glossary.md` ("Mundo").
@@ -382,9 +398,11 @@ class GameWorld {
   });
 }
 
-/// Os 3 mundos do jogo — todos com fases e motor implementados (Mundo 1
-/// labirinto, Mundo 2 esteira, Mundo 3 puzzles de código, ver
-/// `.claude/plans/Mundos.md`, Etapas 1-3).
+/// Os 5 mundos do jogo — todos com fases e motor implementados. Mundo 1
+/// (labirinto) e Mundo 2 (esteira) formam a Trilha 1 junto do Mundo 3
+/// ("Preveja a Saída", ponte de leitura de código); Mundo 4 ("Complete o
+/// Código") e Mundo 5 ("Modo Debug") formam a Trilha 2. Ver
+/// `.claude/plans/Mundos.md` e `.claude/memory/decisions.md`.
 final worlds = <GameWorld>[
   GameWorld(
     number: 1,
@@ -406,11 +424,29 @@ final worlds = <GameWorld>[
   ),
   GameWorld(
     number: 3,
+    name: 'Preveja a Saída',
+    subtitle: 'Leia código real e adivinhe o resultado',
+    difficultyLabel: 'Médio',
+    gameType: WorldGameType.predictOutput,
+    comingSoon: false,
+    levels: world3Levels,
+  ),
+  GameWorld(
+    number: 4,
+    name: 'Complete o Código',
+    subtitle: 'Escolha a linha certa para completar',
+    difficultyLabel: 'Difícil',
+    gameType: WorldGameType.completeCode,
+    comingSoon: false,
+    levels: world4Levels,
+  ),
+  GameWorld(
+    number: 5,
     name: 'Modo Debug',
     subtitle: 'Resolva puzzles de código de verdade',
     difficultyLabel: 'Difícil',
     gameType: WorldGameType.codePuzzle,
     comingSoon: false,
-    levels: world3Levels,
+    levels: world5Levels,
   ),
 ];

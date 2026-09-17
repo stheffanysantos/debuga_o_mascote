@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:debuga_o_mascote/game/code_puzzle_checker.dart';
 import 'package:debuga_o_mascote/game/code_puzzle_scoring.dart';
-import 'package:debuga_o_mascote/models/code_puzzle_level.dart';
+import 'package:debuga_o_mascote/models/code_line.dart';
 
 void main() {
   group('checkReorder', () {

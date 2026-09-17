@@ -1,3 +1,10 @@
+/// Pontuação máxima de uma fase (1ª tentativa/blocos ótimos) — mesmo valor
+/// usado por `computeScore` e `computeCodePuzzleScore` (`code_puzzle_scoring.dart`).
+/// Fonte de verdade pro cálculo de "% do máximo possível de um Mundo"
+/// (`ProgressState.totalPoints`, desbloqueio de Mundo por pontos — ver
+/// `.claude/memory/decisions.md`).
+const maxLevelPoints = 300;
+
 /// Resultado da pontuação de uma Execução vitoriosa.
 class ScoreResult {
   final int stars;
@@ -27,7 +34,7 @@ ScoreResult computeScore({required int blocksUsed, required int optimalBlocks}) 
     stars = 1;
   }
 
-  final points = (300 - extra * 50).clamp(50, 300);
+  final points = (maxLevelPoints - extra * 50).clamp(50, maxLevelPoints);
 
   return ScoreResult(stars: stars, points: points);
 }
