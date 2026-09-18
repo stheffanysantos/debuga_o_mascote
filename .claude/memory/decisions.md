@@ -1367,3 +1367,45 @@ Nenhum `collectibles` cai na célula `start` de sua fase (célula inicial nunca 
 **Por quê:** conclusão da pendência explícita deixada pela entrada "Mundo 2 v4" — a UI precisava acompanhar o motor novo para o app voltar a compilar e os Mundos 2/3 ficarem de fato jogáveis (não só corretos "no motor").
 
 **Como aplicar:** regenerar a narração do tutorial (`python tool/generate_tutorial_narration.py`, precisa de `pip install edge-tts` e internet — texto-fonte já atualizado em `tutorial_content.dart`) para os Mundos 2/3 e suas recapitulações. Rodar `flutter analyze`/`flutter test` (ver nota acima) e corrigir qualquer divergência entre a estimativa manual de altura de tela e o comportamento real do `flutter_test` — as superfícies de teste ajustadas (`Size(400, 1700)`) são uma estimativa conservadora, não uma medição real. Se um Mundo futuro do motor de labirinto (`WorldGameType.maze`) precisar de um 4º elemento visual no tabuleiro, seguir o mesmo padrão: campo opcional em `Level`, indicador privado em `_BoardCell`/`gameplay_view.dart` (só sobe pra `lib/widgets/` se uma 2ª tela precisar dele — `CharacterAvatarCircle` já tinha 2 usos antes deste, por isso já morava lá).
+
+---
+
+## 2026-09-18 — Fechamento do Mundo 2/3: overflow real no painel "Resgatados: X/Y" corrigido; suíte inteira verificada
+
+**Decisão:** rodei `flutter analyze`/`flutter test` (suíte inteira) depois da entrega do UI Engineer da entrada anterior — `flutter analyze` limpo, mas 13 specs de `no_overflow_test.dart` falhavam com `RenderFlex overflowed by 50 pixels on the right`, todas nas variações de "Gameplay (Encruzilhada Colorida)" [nome de teste desatualizado — o Mundo 2 já se chama "Resgate de Personagens"] em celular pequeno (320×568).
+
+**Causa raiz confirmada com um teste ad-hoc** (`FlutterError.onError` sobrescrito temporariamente pra imprimir o diagnóstico completo, já que `no_overflow_test.dart` engole o erro via `tester.takeException()` sem dump no console): o `Row` do painel "Resgatados: X / Y" (`gameplay_view.dart:331`, `_buildRescuePanel`) — `Icon` + `SizedBox(8)` + `Text('Resgatados: N / M', ...)` em Nunito 900 16pt, sem nenhum `Flexible`/encolhimento — não cabia nos ~226px restantes depois do padding da tela (18px) + padding do Container (16px) em 320px de largura.
+
+**Correção:** envolvido o `Text` em `Flexible(child: FittedBox(fit: BoxFit.scaleDown, child: Text(..., maxLines: 1)))` — mesma técnica já usada em `gameplay_header_widget.dart`/`CommandButton` para encolher em vez de estourar.
+
+**Por quê:** achado real ao verificar a entrega antes de considerá-la pronta — `flutter analyze` sozinho não pega overflow de layout, só `flutter test` roda o widget de verdade.
+
+**Como aplicar:** `flutter analyze` limpo; `flutter test` com **671 specs passando**, suíte inteira. Nenhuma pendência restante do Mundo 2/3 desta rodada.
+
+---
+
+## 2026-09-18 — Mundo 4 pivota para "Missão de Código" (história + perguntas A/B/C/D) — planejamento registrado, implementação fica para depois
+
+**Decisão:** o usuário, ainda testando o Mundo 4 recém-entregue ("esmaecimento progressivo"), pediu uma mudança de mecânica completamente nova: cada fase ganha uma histórinha curta + uma sequência de perguntas de múltipla escolha (A/B/C/D) sobre código; cada resposta certa avança o Mascote 1 passo à frente num caminho **linear simples** (sem parede/virar, confirmado com o usuário — não o grid 6×6 dos Mundos 1-3); as opções podem ser código em texto ou os ícones de bloco já usados nos outros mundos. Pedido explícito: **planejar e escrever um `.md` de execução, sem implementar nada agora** — a implementação de verdade fica para uma sessão futura.
+
+**Junto disso**, uma feature separada foi confirmada e incluída no mesmo plano: ao terminar uma Trilha (ou tocar por 1ª vez no 1º Mundo da trilha seguinte, o que vier primeiro), a Libug explica o tema da próxima Trilha numa tela dedicada (Trilha 1: tela separada logo depois do Boas-vindas; Trilhas 2+: no gatilho que ocorrer primeiro entre fim da trilha anterior/1º toque no novo Mundo).
+
+**Plano completo** (modelo `CodeQuestLevel`/`CodeQuestQuestion`, motor Dart puro `code_quest_progress.dart`, reaproveitamento de `CodePuzzleResultView`/`computeCodePuzzleScore`/`SelectableLineTile`/`highlightCodeLine` já existentes, `trackIntroSlides`/`hasSeenTrackIntro` para a introdução de Trilha) documentado em **`.claude/plans/Mundo4-MissaoCodigo.md`** — arquivo committável no repositório, não o arquivo de trabalho do harness.
+
+**Por quê:** pedido explícito do usuário — não desperdiçar esforço de implementação numa mecânica que ele já sabe que vai substituir; quer revisar o plano por escrito antes.
+
+**Como aplicar:** ao implementar, seguir `.claude/plans/Mundo4-MissaoCodigo.md` de ponta a ponta — ele já resolve as decisões de reaproveitamento (nenhum motor/tela novo do zero além do estritamente necessário) e lista os arquivos órfãos do Mundo 4 atual (`block_program_*`) a excluir por completo, seguindo o padrão já usado 2× nesta sessão para trocas de mecânica de mundo.
+
+---
+
+## 2026-09-18 — Pontuação de sessão reduzida (~10×); investigação confirma que a duplicação relatada no Placar não existe mais nos dados
+
+**Decisão:** o usuário relatou 2 problemas reais do Placar Geral: (1) jogadores acumulando mais de 46.000 pontos de sessão — número absurdo pra um placar de estande; (2) quem já zerou o jogo continuaria aparecendo tanto na aba "Geral" (por pontos) quanto na aba "Zeraram o Jogo".
+
+**Item 1 (pontuação alta) — confirmado e corrigido.** `lib/game/leaderboard_scoring.dart`: `_basePointsByWorld` (`{1:300,...,7:900}`) e `_speedBonusCap` (`200`) reduzidos em ~10× (`{1:30,...,7:90}`/`20`) — mesmo espírito da redução já aplicada antes ao "PONTOS" por fase (`.claude/memory/decisions.md`, "Pontuação por fase reduzida (1000→300)"). A fórmula em si (`base + bônus de velocidade`) não muda, só a escala. `test/game/leaderboard_scoring_test.dart` atualizado com os números novos.
+
+**Item 2 (duplicação no Placar) — investigado com dados reais, não reproduzido.** Antes de tentar corrigir, li a coleção `scores` direto do Firestore de produção (`https://firestore.googleapis.com/v1/projects/debugaomascote/databases/(default)/documents/scores` — leitura pública, permitida pela própria regra `allow read: if true`, sem precisar de nenhuma credencial). Resultado: hoje existem só **5 documentos**, todos no esquema uid-keyed (chave do documento == campo `uid`), todos com `gameCompleted` presente e coerente (2 jogadores ainda jogando, 3 que já zeraram — pontuações de 46.122 a 47.025, confirmando o problema do item 1). **Não há duplicação nos dados atuais** — a suspeita levantada (documentos órfãos do esquema antigo, pré-migração pro Placar Geral, registrada em `.claude/memory/decisions.md` na entrada de 2026-09-17 "Placar do Dia vira Placar Geral") já não se aplica: esses 2 documentos órfãos foram removidos em algum momento antes desta sessão (não por mim, e sem registro de quando/por quem). A lógica de filtragem em `FirebaseLeaderboardRepository.topOverall()`/`completedGame()` (e o equivalente local) já está correta e não precisou de nenhuma mudança.
+
+**Por quê:** pedidos explícitos do usuário — a pontuação alta é um problema de escala real (corrigido); a duplicação relatada não pôde ser reproduzida contra o dado real de produção, então nada foi "corrigido" ali além de fechar a pendência antiga como não aplicável.
+
+**Como aplicar:** `flutter analyze` limpo; `flutter test` — `test/game/leaderboard_scoring_test.dart` com os números novos passando. Se a duplicação for observada de novo no futuro, reabrir a investigação lendo a coleção `scores` do jeito que foi feito aqui (leitura pública via REST, sem precisar de credencial) antes de assumir que é a mesma causa antiga.
