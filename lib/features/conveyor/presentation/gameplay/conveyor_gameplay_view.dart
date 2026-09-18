@@ -93,13 +93,47 @@ void _onVictoryPrimaryAction(BuildContext context, WidgetRef ref, ConveyorVictor
 /// (Mundo 1), mas sem grid/mascote: o jogador classifica, um de cada vez,
 /// os Itens de `level.itemQueue` mandando-os para a Caixa A/B certa. Ver
 /// `.claude/docs/GAME_DESIGN.md`, seção "Mundo 2 — Esteira".
-class ConveyorGameplayView extends ConsumerWidget {
+///
+/// `ConsumerStatefulWidget` (não `ConsumerWidget`) só para guardar o
+/// `ScrollController`/`GlobalKey`s da fila — estado puramente de
+/// apresentação (rolar a fila até o item atual), não de jogo: a lógica de
+/// Execução continua inteira em `ConveyorGameplayViewModel`. Ver
+/// `.claude/rules/architecture.md`.
+class ConveyorGameplayView extends ConsumerStatefulWidget {
   final String levelId;
 
   const ConveyorGameplayView({super.key, required this.levelId});
 
-  void _handleEffect(BuildContext context, WidgetRef ref, ConveyorGameplayEffect effect) {
-    ref.read(conveyorGameplayViewModelProvider(levelId).notifier).clearEffect();
+  @override
+  ConsumerState<ConveyorGameplayView> createState() => _ConveyorGameplayViewState();
+}
+
+class _ConveyorGameplayViewState extends ConsumerState<ConveyorGameplayView> {
+  static const _scrollDuration = Duration(milliseconds: 320);
+
+  /// Uma `GlobalKey` por Item da fila — usada com `Scrollable.ensureVisible`
+  /// para rolar a fila horizontal até o item atual, em vez de calcular o
+  /// offset manualmente a partir da largura do item/separador (mais
+  /// robusto a qualquer ajuste futuro de layout). Testador: "Quando tem uma
+  /// fila grande ele não rola sozinho pra a direita" — ver
+  /// `.claude/memory/decisions.md`.
+  final Map<int, GlobalKey> _itemKeys = {};
+
+  GlobalKey _keyFor(int index) => _itemKeys.putIfAbsent(index, () => GlobalKey());
+
+  void _scrollToItem(int index) {
+    final itemContext = _itemKeys[index]?.currentContext;
+    if (itemContext == null) return;
+    Scrollable.ensureVisible(
+      itemContext,
+      duration: _scrollDuration,
+      curve: Curves.easeInOut,
+      alignment: 0.5,
+    );
+  }
+
+  void _handleEffect(BuildContext context, ConveyorGameplayEffect effect) {
+    ref.read(conveyorGameplayViewModelProvider(widget.levelId).notifier).clearEffect();
     switch (effect) {
       case NavigateToConveyorVictory(:final data):
         Navigator.of(context).push(MaterialPageRoute(
@@ -113,7 +147,7 @@ class ConveyorGameplayView extends ConsumerWidget {
           ),
         ));
       case NavigateToConveyorFailure(:final data):
-        final level = ref.read(conveyorGameplayViewModelProvider(levelId)).level;
+        final level = ref.read(conveyorGameplayViewModelProvider(widget.levelId)).level;
         final hintChips = [
           for (final block in level.hintProgram)
             Builder(builder: (context) {
@@ -140,14 +174,23 @@ class ConveyorGameplayView extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen<ConveyorGameplayState>(conveyorGameplayViewModelProvider(levelId), (previous, next) {
+  Widget build(BuildContext context) {
+    ref.listen<ConveyorGameplayState>(conveyorGameplayViewModelProvider(widget.levelId), (previous, next) {
       final effect = next.pendingEffect;
-      if (effect != null) _handleEffect(context, ref, effect);
+      if (effect != null) _handleEffect(context, effect);
+
+      // Rola a fila para acompanhar o item atual durante a Execução — só
+      // quando o índice realmente muda (evita chamadas redundantes a cada
+      // rebuild) e só quando ainda há um item nessa posição (o índice pode
+      // avançar além do fim da fila quando a Execução termina).
+      final nextIndex = next.cursor.nextItemIndex;
+      if (previous?.cursor.nextItemIndex != nextIndex && nextIndex < next.level.itemQueue.length) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToItem(nextIndex));
+      }
     });
 
-    final state = ref.watch(conveyorGameplayViewModelProvider(levelId));
-    final notifier = ref.read(conveyorGameplayViewModelProvider(levelId).notifier);
+    final state = ref.watch(conveyorGameplayViewModelProvider(widget.levelId));
+    final notifier = ref.read(conveyorGameplayViewModelProvider(widget.levelId).notifier);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -209,7 +252,10 @@ class ConveyorGameplayView extends ConsumerWidget {
               scrollDirection: Axis.horizontal,
               itemCount: level.itemQueue.length,
               separatorBuilder: (context, index) => const SizedBox(width: 10),
-              itemBuilder: (context, index) => Center(child: _buildItemDot(state, index)),
+              itemBuilder: (context, index) => KeyedSubtree(
+                key: _keyFor(index),
+                child: Center(child: _buildItemDot(state, index)),
+              ),
             ),
           ),
           const SizedBox(height: 18),
@@ -222,37 +268,6 @@ class ConveyorGameplayView extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-
-  /// Ícone dos 2 comandos condicionais: uma bolinha (eco do Item da
-  /// esteira) + seta — reforça visualmente "isto é uma decisão baseada
-  /// numa cor", em vez da seta genérica sozinha (achado do UX Reviewer).
-  /// `foreground` já contrasta com o fundo colorido do botão (roxo escuro
-  /// no botão amarelo, branco no botão roxo).
-  Widget _conditionIcon(double size, {required Color foreground}) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(width: size * 0.42, height: size * 0.42, decoration: BoxDecoration(shape: BoxShape.circle, color: foreground)),
-        SizedBox(width: size * 0.12),
-        AppIcons.arrowRight(size: size * 0.7, color: foreground),
-      ],
-    );
-  }
-
-  /// Mesma ideia de `_conditionIcon` (bolinha ecoando o Item da esteira),
-  /// mas com o ícone de `Repetir` em vez da seta — reforça visualmente que
-  /// "Enquanto" também repete, só que condicionalmente (não um número fixo
-  /// como `Repetir 3×`).
-  Widget _whileIcon(double size, {required Color foreground}) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(width: size * 0.42, height: size * 0.42, decoration: BoxDecoration(shape: BoxShape.circle, color: foreground)),
-        SizedBox(width: size * 0.12),
-        AppIcons.repeat(size: size * 0.7, color: foreground),
-      ],
     );
   }
 
@@ -327,14 +342,14 @@ class ConveyorGameplayView extends ConsumerWidget {
         const SizedBox(height: 14),
         // 5 comandos no Mundo 2 (contra 4 no labirinto) — mesma grade
         // compacta de `CommandButtonGrid` do Mundo 1. "Enquanto" continua
-        // diferenciado de "Se" pelo `border` (ver `_whileIcon`/
+        // diferenciado de "Se" pelo `border` (ver `whileIcon`/
         // `.claude/docs/GAME_DESIGN.md`).
         CommandButtonGrid(
           crossAxisCount: 3,
           maxCellHeight: 100,
           buttons: [
             CommandButton(
-              iconBuilder: (size) => _conditionIcon(size, foreground: AppColors.purpleDark),
+              iconBuilder: (size) => conditionIcon(size, foreground: AppColors.purpleDark),
               label: 'Se Amarelo → A',
               background: AppColors.yellowNeon,
               foreground: AppColors.purpleDark,
@@ -342,7 +357,7 @@ class ConveyorGameplayView extends ConsumerWidget {
               onTap: () => notifier.addBlock(BeltBlockType.ifYellowToBinA),
             ),
             CommandButton(
-              iconBuilder: (size) => _conditionIcon(size, foreground: AppColors.white),
+              iconBuilder: (size) => conditionIcon(size, foreground: AppColors.white),
               label: 'Se Roxo → B',
               background: AppColors.purple,
               foreground: AppColors.white,
@@ -350,7 +365,7 @@ class ConveyorGameplayView extends ConsumerWidget {
               onTap: () => notifier.addBlock(BeltBlockType.ifPurpleToBinB),
             ),
             CommandButton(
-              iconBuilder: (size) => _whileIcon(size, foreground: AppColors.purpleDark),
+              iconBuilder: (size) => whileIcon(size, foreground: AppColors.purpleDark),
               label: 'Enquanto Amarelo → A',
               background: AppColors.yellowNeon,
               foreground: AppColors.purpleDark,
@@ -359,7 +374,7 @@ class ConveyorGameplayView extends ConsumerWidget {
               onTap: () => notifier.addBlock(BeltBlockType.whileYellowToBinA),
             ),
             CommandButton(
-              iconBuilder: (size) => _whileIcon(size, foreground: AppColors.white),
+              iconBuilder: (size) => whileIcon(size, foreground: AppColors.white),
               label: 'Enquanto Roxo → B',
               background: AppColors.purple,
               foreground: AppColors.white,
@@ -399,6 +414,14 @@ class ConveyorGameplayView extends ConsumerWidget {
       repeatCount: style.repeatCount,
       highlighted: state.currentStepBlockIndex == index,
       onTap: () => notifier.removeBlockAt(index),
+      // "Seu Programa" mostra só o ícone (rótulo continua nos
+      // `CommandButton`s da paleta acima) — pedido explícito do usuário,
+      // ver `.claude/memory/decisions.md`.
+      icon: style.icon(programBlockChipIconSize),
+      showLabel: false,
+      // "Enquanto" precisa continuar diferenciado de "Se" mesmo sem o
+      // texto (achado do UX Reviewer) — mesmo contorno do `CommandButton`.
+      border: style.border,
     );
   }
 }

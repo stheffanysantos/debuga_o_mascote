@@ -22,6 +22,15 @@ class CompleteCodeLevel implements GameLevel {
   /// soma").
   final String title;
 
+  /// Pergunta de contexto mostrada junto do trecho de código — mesmo papel
+  /// de `PredictOutputLevel.question` (Mundo 3): sem ela, `title` sozinho
+  /// não bastava para o jogador saber o que o código deveria fazer/exibir
+  /// (achado real de testador), e a Fase 12 chegava a admitir mais de uma
+  /// opção como "certa" sem um alvo explícito de saída. Sempre deixa
+  /// explícito o comportamento/resultado esperado do código, de forma que
+  /// só uma das `options` o satisfaça.
+  final String question;
+
   /// O trecho de código completo e correto, incluindo a linha de
   /// `blankLineIndex` — a UI é responsável por não revelar essa linha antes
   /// de o jogador responder (mostra um espaço em branco no lugar dela).
@@ -48,6 +57,7 @@ class CompleteCodeLevel implements GameLevel {
     required this.world,
     required this.number,
     required this.title,
+    required this.question,
     required this.code,
     required this.blankLineIndex,
     required this.options,
@@ -69,6 +79,7 @@ final world4Levels = <CompleteCodeLevel>[
     world: 4,
     number: 1,
     title: 'Complete a soma',
+    question: 'Qual linha faz o código somar a e b, para que "soma" valha 7 e o print mostre 7?',
     code: const [
       CodeLine('int a = 3;'),
       CodeLine('int b = 4;'),
@@ -89,6 +100,7 @@ final world4Levels = <CompleteCodeLevel>[
     world: 4,
     number: 2,
     title: 'Complete a condição',
+    question: 'Qual linha completa a condição para que o código imprima "Maior de idade" quando idade for 20?',
     code: const [
       CodeLine('int idade = 20;'),
       CodeLine('if (idade >= 18) {'),
@@ -109,6 +121,7 @@ final world4Levels = <CompleteCodeLevel>[
     world: 4,
     number: 3,
     title: 'Complete o laço',
+    question: 'Qual linha faz o laço imprimir 0, 1 e 2, nessa ordem?',
     code: const [
       CodeLine('for (int i = 0; i < 3; i++) {'),
       CodeLine('  print(i);'),
@@ -128,6 +141,7 @@ final world4Levels = <CompleteCodeLevel>[
     world: 4,
     number: 4,
     title: 'Complete o retorno',
+    question: 'Qual linha faz a função devolver o dobro do número recebido?',
     code: const [
       CodeLine('int dobro(int n) {'),
       CodeLine('  return n * 2;'),
@@ -147,6 +161,7 @@ final world4Levels = <CompleteCodeLevel>[
     world: 4,
     number: 5,
     title: 'Se, senão',
+    question: 'Qual linha fecha o bloco do "se" e abre o do "senão", para que o código imprima "Reprovado" quando a nota for 4?',
     code: const [
       CodeLine('int nota = 4;'),
       CodeLine('if (nota >= 6) {'),
@@ -169,6 +184,7 @@ final world4Levels = <CompleteCodeLevel>[
     world: 4,
     number: 6,
     title: 'Complete a soma no laço',
+    question: 'Qual linha faz o laço somar todos os números de 1 a 5, para que o código imprima 15?',
     code: const [
       CodeLine('int total = 0;'),
       CodeLine('for (int i = 1; i <= 5; i++) {'),
@@ -190,6 +206,7 @@ final world4Levels = <CompleteCodeLevel>[
     world: 4,
     number: 7,
     title: 'Complete o enquanto',
+    question: 'Qual linha faz o laço repetir enquanto o contador for menor que 5, parando exatamente quando chegar a 5?',
     code: const [
       CodeLine('int contador = 0;'),
       CodeLine('while (contador < 5) {'),
@@ -210,6 +227,7 @@ final world4Levels = <CompleteCodeLevel>[
     world: 4,
     number: 8,
     title: 'Complete a comparação',
+    question: 'Qual linha faz a função devolver verdadeiro quando o número recebido for par?',
     code: const [
       CodeLine('bool ehPar(int numero) {'),
       CodeLine('  return numero % 2 == 0;'),
@@ -229,6 +247,7 @@ final world4Levels = <CompleteCodeLevel>[
     world: 4,
     number: 9,
     title: 'Complete a lista',
+    question: 'Qual linha declara corretamente a lista de números inteiros, para que o laço some 1 + 2 + 3 sem erro?',
     code: const [
       CodeLine('List<int> numeros = [1, 2, 3];'),
       CodeLine('int soma = 0;'),
@@ -250,6 +269,7 @@ final world4Levels = <CompleteCodeLevel>[
     world: 4,
     number: 10,
     title: 'Complete o "senão se"',
+    question: 'Qual linha completa a segunda condição, para que o código imprima "Bom" quando a nota for 6?',
     code: const [
       CodeLine('int nota = 6;'),
       CodeLine('if (nota >= 7) {'),
@@ -274,6 +294,7 @@ final world4Levels = <CompleteCodeLevel>[
     world: 4,
     number: 11,
     title: 'Complete a função com parâmetros',
+    question: 'Qual linha declara corretamente os parâmetros da função, para que soma(2, 3) funcione sem erro?',
     code: const [
       CodeLine('int soma(int a, int b) {'),
       CodeLine('  return a + b;'),
@@ -293,6 +314,7 @@ final world4Levels = <CompleteCodeLevel>[
     world: 4,
     number: 12,
     title: 'Complete o laço com condição',
+    question: 'Qual linha faz o código somar os números de 1 a 3, pulando o 2, para que o print mostre exatamente 4?',
     code: const [
       CodeLine('int total = 0;'),
       CodeLine('for (int i = 1; i <= 3; i++) {'),

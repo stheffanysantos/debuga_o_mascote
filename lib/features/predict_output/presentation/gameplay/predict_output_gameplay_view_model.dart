@@ -33,6 +33,16 @@ class PredictOutputGameplayViewModel extends _$PredictOutputGameplayViewModel {
   /// precisava mudar a resposta (achado do UX Reviewer).
   void clearSelectionAfterLoss() => state = state.copyWith(selectedOptionIndex: null);
 
+  /// Chamado pela View quando o jogador toca o ícone de "jogar de novo" na
+  /// tela de Vitória (`CodePuzzleResultView._buildWon`) — esse atalho faz
+  /// só um `pop()` de volta para esta mesma instância/provider (não recria
+  /// a fase do zero, ver `.claude/memory/decisions.md`, "Bug real
+  /// corrigido: `attempts` não resetava..."), então sem este reset
+  /// explícito `attempts` continuaria acumulando indefinidamente entre
+  /// replays rápidos, mesmo o jogador acertando de primeira em cada um.
+  /// Reseta para exatamente o estado que `build()` produziria.
+  void resetForReplay() => state = PredictOutputGameplayState(level: state.level);
+
   void confirm() {
     final selected = state.selectedOptionIndex;
     if (selected == null) return;

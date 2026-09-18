@@ -409,8 +409,14 @@ class GameplayView extends ConsumerWidget {
       background: style.background,
       foreground: style.foreground,
       repeatCount: style.repeatCount,
+      badgeText: style.badgeText,
       highlighted: state.currentStepBlockIndex == index,
       onTap: () => notifier.removeBlockAt(index),
+      // "Seu Programa" mostra só o ícone (rótulo continua nos
+      // `CommandButton`s da paleta abaixo) — pedido explícito do usuário,
+      // ver `.claude/memory/decisions.md`.
+      icon: style.icon(programBlockChipIconSize),
+      showLabel: false,
     );
   }
 }

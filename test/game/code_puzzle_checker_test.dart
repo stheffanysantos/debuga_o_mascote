@@ -48,6 +48,64 @@ void main() {
       ];
       expect(checkReorder(attempt, correct), isFalse);
     });
+
+    // Regressão: Fase 2 do Mundo 5 (`world5_level2`) — "int a = 2;"/
+    // "int b = 3;" são independentes entre si, ambas só precisam vir antes
+    // de "print(a + b);". Ver `.claude/memory/decisions.md`.
+    group('linhas intercambiáveis (groupOf)', () {
+      const correctWithGroups = [
+        CodeLine('int a = 2;'),
+        CodeLine('int b = 3;'),
+        CodeLine('print(a + b);'),
+      ];
+      const groupOf = [0, 0, 1];
+
+      test('aceita a ordem original', () {
+        final attempt = [
+          const CodeLine('int a = 2;'),
+          const CodeLine('int b = 3;'),
+          const CodeLine('print(a + b);'),
+        ];
+        expect(checkReorder(attempt, correctWithGroups, groupOf: groupOf), isTrue);
+      });
+
+      test('aceita a ordem trocada dentro do mesmo grupo', () {
+        final attempt = [
+          const CodeLine('int b = 3;'),
+          const CodeLine('int a = 2;'),
+          const CodeLine('print(a + b);'),
+        ];
+        expect(checkReorder(attempt, correctWithGroups, groupOf: groupOf), isTrue);
+      });
+
+      test('rejeita quando uma linha de um grupo posterior vem antes', () {
+        final attempt = [
+          const CodeLine('print(a + b);'),
+          const CodeLine('int a = 2;'),
+          const CodeLine('int b = 3;'),
+        ];
+        expect(checkReorder(attempt, correctWithGroups, groupOf: groupOf), isFalse);
+      });
+
+      test('rejeita quando falta uma linha do grupo, mesmo com o mesmo tamanho', () {
+        final attempt = [
+          const CodeLine('int a = 2;'),
+          const CodeLine('int a = 2;'),
+          const CodeLine('print(a + b);'),
+        ];
+        expect(checkReorder(attempt, correctWithGroups, groupOf: groupOf), isFalse);
+      });
+
+      test('sem groupOf, mesma ordem trocada dentro do "grupo" antigo (por linha) é rejeitada', () {
+        final attempt = [
+          const CodeLine('int b = 3;'),
+          const CodeLine('int a = 2;'),
+          const CodeLine('print(a + b);'),
+        ];
+        // Sem `groupOf`, o comportamento antigo (ordem exata) é preservado.
+        expect(checkReorder(attempt, correctWithGroups), isFalse);
+      });
+    });
   });
 
   group('checkFindBug', () {

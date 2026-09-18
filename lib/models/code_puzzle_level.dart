@@ -42,6 +42,19 @@ class CodePuzzleLevel implements GameLevel {
   /// guarda uma ordem embaralhada fixa. Vazio em fases `findBug`.
   final List<CodeLine> correctOrder;
 
+  /// Grupo de cada linha em `correctOrder` (mesmo índice) — só preenchido
+  /// quando `type == reorder`. Linhas com o **mesmo** grupo podem aparecer
+  /// em qualquer ordem relativa entre si (ex.: duas declarações
+  /// independentes, ambas antes de uma linha que as usa); a ordem **entre**
+  /// grupos diferentes continua obrigatória. Sempre não-decrescente (cada
+  /// grupo ocupa um intervalo contíguo de `correctOrder`) — verificado por
+  /// `assert` na fábrica. Quando não informado na fábrica, cada linha vira
+  /// o seu próprio grupo sequencial (`0, 1, 2, ...`), preservando o
+  /// comportamento antigo de ordem exata. Ver `checkReorder`
+  /// (`lib/game/code_puzzle_checker.dart`) e `.claude/memory/decisions.md`.
+  /// Vazio em fases `findBug`.
+  final List<int> groupOf;
+
   /// Código completo, já na ordem certa, com 1 linha errada — só
   /// preenchido quando `type == findBug`. Vazio em fases `reorder`.
   final List<CodeLine> codeWithBug;
@@ -63,19 +76,32 @@ class CodePuzzleLevel implements GameLevel {
     required this.title,
     required this.type,
     required this.correctOrder,
+    required this.groupOf,
     required this.codeWithBug,
     required this.buggyLineIndex,
     required this.bugExplanation,
   });
 
-  /// Fase de reordenar linhas.
+  /// Fase de reordenar linhas. `groupOf` (opcional) marca linhas
+  /// intercambiáveis entre si — ver o campo `groupOf` acima. Sem ele,
+  /// cada linha é seu próprio grupo (ordem exata, comportamento de sempre).
   factory CodePuzzleLevel.reorder({
     required String id,
     required int number,
     required String title,
     required List<CodeLine> correctOrder,
+    List<int>? groupOf,
   }) {
     assert(correctOrder.isNotEmpty, 'reorder precisa de correctOrder não vazio ($id)');
+    final resolvedGroupOf = groupOf ?? List<int>.generate(correctOrder.length, (i) => i);
+    assert(
+      resolvedGroupOf.length == correctOrder.length,
+      'groupOf precisa ter o mesmo tamanho de correctOrder ($id)',
+    );
+    assert(
+      _isNonDecreasing(resolvedGroupOf),
+      'groupOf precisa ser não-decrescente — cada grupo ocupa um intervalo contíguo ($id)',
+    );
     return CodePuzzleLevel._(
       id: id,
       world: 5,
@@ -83,6 +109,7 @@ class CodePuzzleLevel implements GameLevel {
       title: title,
       type: CodePuzzleType.reorder,
       correctOrder: correctOrder,
+      groupOf: resolvedGroupOf,
       codeWithBug: const [],
       buggyLineIndex: -1,
       bugExplanation: '',
@@ -110,11 +137,19 @@ class CodePuzzleLevel implements GameLevel {
       title: title,
       type: CodePuzzleType.findBug,
       correctOrder: const [],
+      groupOf: const [],
       codeWithBug: codeWithBug,
       buggyLineIndex: buggyLineIndex,
       bugExplanation: bugExplanation,
     );
   }
+}
+
+bool _isNonDecreasing(List<int> values) {
+  for (var i = 1; i < values.length; i++) {
+    if (values[i] < values[i - 1]) return false;
+  }
+  return true;
 }
 
 /// As 12 fases do Mundo 5 ("Modo Debug"): começa só com `reorder` (mecânica
@@ -141,6 +176,11 @@ final world5Levels = <CodePuzzleLevel>[
       CodeLine('int b = 3;'),
       CodeLine('print(a + b);'),
     ],
+    // As duas declarações são independentes entre si (nenhuma usa a
+    // outra) — só precisam vir antes do print. Achado real de testador:
+    // a ordem entre elas é arbitrária, mas antes disso `checkReorder`
+    // exigia a ordem exata (ver `.claude/memory/decisions.md`).
+    groupOf: const [0, 0, 1],
   ),
   CodePuzzleLevel.reorder(
     id: 'world5_level3',
@@ -250,6 +290,10 @@ final world5Levels = <CodePuzzleLevel>[
       CodeLine('}'),
       CodeLine('print(soma);'),
     ],
+    // Declarar a lista e zerar "soma" são independentes entre si — só
+    // precisam vir antes do laço que usa as duas. O resto do bloco (corpo
+    // do laço, fechamento, print) continua em ordem rígida.
+    groupOf: const [0, 0, 1, 2, 3, 4],
   ),
   CodePuzzleLevel.findBug(
     id: 'world5_level12',

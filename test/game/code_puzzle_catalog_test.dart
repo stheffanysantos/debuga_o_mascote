@@ -27,10 +27,22 @@ void main() {
           expect(level.codeWithBug, isEmpty, reason: 'Fase ${level.number}: reorder não deveria ter codeWithBug');
           expect(level.buggyLineIndex, -1, reason: 'Fase ${level.number}: reorder não deveria ter buggyLineIndex');
           expect(level.bugExplanation, isEmpty, reason: 'Fase ${level.number}: reorder não deveria ter bugExplanation');
+          expect(
+            level.groupOf.length,
+            level.correctOrder.length,
+            reason: 'Fase ${level.number}: groupOf precisa ter o mesmo tamanho de correctOrder',
+          );
+          for (var i = 1; i < level.groupOf.length; i++) {
+            expect(
+              level.groupOf[i],
+              greaterThanOrEqualTo(level.groupOf[i - 1]),
+              reason: 'Fase ${level.number}: groupOf precisa ser não-decrescente',
+            );
+          }
 
           // A própria ordem correta, tocada na sequência certa, precisa ser
           // aceita pelo checker (garante que o dado da fase é solucionável).
-          expect(checkReorder(level.correctOrder, level.correctOrder), isTrue);
+          expect(checkReorder(level.correctOrder, level.correctOrder, groupOf: level.groupOf), isTrue);
           break;
         case CodePuzzleType.findBug:
           expect(level.codeWithBug, isNotEmpty, reason: 'Fase ${level.number}: findBug precisa de codeWithBug não vazio');

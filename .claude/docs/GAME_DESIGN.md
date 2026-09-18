@@ -120,6 +120,7 @@ Reaproveita `computeCodePuzzleScore` (mesma fórmula do Mundo 5, ver abaixo) —
 Continuação do Mundo 3 dentro da Trilha 2 (mais difícil — já manipula código de verdade, não só lê): sem grid, sem Mascote, sem fila de itens. Cada fase (`CompleteCodeLevel`, `lib/models/complete_code_level.dart`) mostra um trecho de código real com **1 linha em branco** (`blankLineIndex`) — o jogador escolhe, por múltipla escolha, qual das `options` (linhas de código candidatas) completa certo. Um degrau mais perto de `reorder`/`findBug` (Mundo 5) do que o Mundo 3, mas ainda por múltipla escolha (não por reordenar/tocar a linha errada).
 
 ### Estrutura da fase
+- `question`: pergunta de contexto mostrada junto do código, deixando explícito o que ele deve fazer/exibir (mesmo papel de `PredictOutputLevel.question` no Mundo 3) — sem ela, `title` sozinho (curto, tipo "Complete a soma") não bastava pro jogador saber o que estava sendo pedido (achado real de testador: "Mundo 4 não dá contexto do que quer que eu faça"). Sempre precisa deixar claro o comportamento/resultado esperado (ex.: "para que o print mostre 7"), de forma que só uma das `options` a satisfaça — sem isso, uma fase pode ficar ambígua o bastante pra mais de uma opção parecer "certa" (achado real: Fase 12 não dizia qual saída era esperada).
 - `code`: o trecho de código completo e correto (a UI não revela `code[blankLineIndex]` antes do jogador responder — mostra um espaço em branco tracejado no lugar, e a prévia da opção escolhida assim que ela é tocada).
 - `options`/`correctOptionIndex`: 2-3 linhas de código candidatas para o espaço em branco.
 - `explanation`: mostrada sempre (ganhou ou perdeu).
@@ -130,6 +131,9 @@ Binária: `selectedOptionIndex == correctOptionIndex` — Vitória; qualquer out
 ### Pontuação e estrelas
 Reaproveita `computeCodePuzzleScore` (mesma fórmula do Mundo 5, ver abaixo).
 
+### Sessão de tentativas (`attempts`) — reset entre visitas distintas
+`attempts` (usado por `computeCodePuzzleScore`) deve refletir quantas vezes o jogador tentou **dentro de uma sessão contínua** naquela fase: perder e tocar "Tentar de novo" aumenta `attempts` de propósito (a pontuação cai, isso é intencional). Mas reabrir a fase do zero — inclusive pelo atalho de "jogar de novo" na própria tela de Vitória (`CodePuzzleResultView._buildWon`, que só dá `pop()` de volta pra mesma instância de Gameplay em vez de recriar a fase) — precisa resetar `attempts` a 0, senão a pontuação continua caindo indefinidamente mesmo acertando de primeira em cada sessão nova (achado real de testador). Ver `.claude/memory/decisions.md`, entrada de 2026-09-18, e o mesmo princípio vale para os Mundos 3 e 5 (mesma família de "veredito único").
+
 ## Mundo 5 — Modo Debug
 
 Mini-jogo de lógica diferente dos Mundos 1 e 2: sem grid, sem Mascote, sem fila de itens, sem execução passo a passo. Inspirado no app real Mimo de ensino de código — cada fase (`CodePuzzleLevel`, `lib/models/code_puzzle_level.dart`) é um puzzle de **veredito único**: o jogador confirma uma resposta e ela está certa ou errada, sem meio-termo ("quase certo" não existe aqui, diferente de "usou blocos a mais" nos outros mundos).
@@ -139,16 +143,19 @@ Cada fase é de exatamente um dos 2 tipos (`CodePuzzleType`):
 
 | Tipo | Mecânica |
 |---|---|
-| **Reordenar** (`reorder`) | O jogador vê um código real (Dart/pseudocódigo simples) com as linhas embaralhadas, mostradas como chips tocáveis — tocar para adicionar à sequência montada, tocar de novo para remover (mesma mecânica de "tocar para montar" dos outros mundos). Ao confirmar, a sequência montada é comparada com `CodePuzzleLevel.correctOrder`, linha a linha e na ordem. |
+| **Reordenar** (`reorder`) | O jogador vê um código real (Dart/pseudocódigo simples) com as linhas embaralhadas, mostradas como chips tocáveis — tocar para adicionar à sequência montada, tocar de novo para remover (mesma mecânica de "tocar para montar" dos outros mundos). Ao confirmar, a sequência montada é comparada com `CodePuzzleLevel.correctOrder`, **por grupo** (`CodePuzzleLevel.groupOf`) — ver abaixo. |
 | **Achar o bug** (`findBug`) | O jogador vê o código inteiro (`CodePuzzleLevel.codeWithBug`), já na ordem certa, com destaque de sintaxe simples. Toca na linha que acha que tem o erro e confirma — comparado com `CodePuzzleLevel.buggyLineIndex`. |
+
+### Linhas intercambiáveis (`groupOf`) em `reorder`
+Algumas fases têm linhas **independentes entre si** (ex.: duas declarações que não dependem uma da outra, ambas só precisando vir antes de uma 3ª linha que as usa) — comparar posição a posição rejeitava uma ordem alternativa igualmente válida (achado real de testador na Fase 2: "int a = 2;"/"int b = 3;" podem vir em qualquer ordem entre si, desde que ambas venham antes de "print(a + b);"). `CodePuzzleLevel.groupOf` (paralelo a `correctOrder`, mesmo índice) resolve isso: linhas com o **mesmo** grupo podem aparecer em qualquer ordem relativa entre si; a ordem **entre** grupos diferentes continua obrigatória. Sem `groupOf` informado na fábrica `CodePuzzleLevel.reorder`, cada linha vira seu próprio grupo sequencial (`0, 1, 2, ...`) — ordem exata, comportamento de sempre, preservado por padrão. `checkReorder` valida isso comparando, grupo a grupo (na ordem em que aparecem em `correct`), se o trecho correspondente de `attempt` tem o mesmo multiconjunto de textos daquele grupo — não mais posição a posição. `correctOrder` continua sendo a única ordem usada para montar a Dica ("essa é a ordem certa") — mostra uma ordem válida, não precisa listar todas.
 
 ### Condição de vitória/derrota
 Binária, sem gradação — decidida em `lib/game/code_puzzle_checker.dart`:
 
 | Condição | Resultado |
 |---|---|
-| `checkReorder`: sequência montada bate exatamente (mesmo tamanho, mesmo texto, mesma ordem) com `correctOrder` | **Vitória** |
-| `checkReorder`: qualquer linha fora de posição, faltando ou sobrando | **Falha** — tentativa não conta como certa; jogador pode tentar de novo |
+| `checkReorder`: sequência montada bate, grupo a grupo, com `correctOrder`/`groupOf` (mesmo tamanho, mesmo texto por grupo, mesma ordem entre grupos) | **Vitória** |
+| `checkReorder`: qualquer linha fora do grupo/posição esperada, faltando ou sobrando | **Falha** — tentativa não conta como certa; jogador pode tentar de novo |
 | `checkFindBug`: linha tocada é `buggyLineIndex` | **Vitória** |
 | `checkFindBug`: linha tocada é qualquer outra | **Falha** — tentativa não conta como certa; jogador pode tentar de novo |
 

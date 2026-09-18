@@ -43,6 +43,7 @@ void main() {
         reason: 'Fase ${level.number}: a opção certa precisa bater com a linha real do espaço em branco',
       );
       expect(level.explanation, isNotEmpty, reason: 'Fase ${level.number}: explanation não pode ser vazia');
+      expect(level.question, isNotEmpty, reason: 'Fase ${level.number}: question não pode ser vazia');
     });
   }
 

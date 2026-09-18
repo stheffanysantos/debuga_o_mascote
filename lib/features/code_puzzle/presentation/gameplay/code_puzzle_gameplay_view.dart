@@ -102,6 +102,7 @@ class CodePuzzleGameplayView extends ConsumerWidget {
             hasNext: data.nextLevel != null,
             onPrimaryAction: () => _onResultPrimaryAction(context, ref, data),
             onBackToMenu: () => Navigator.of(context).popUntil((route) => route.settings.name == codePuzzleStageSelectRouteName),
+            onReplaySameLevel: notifier.resetForReplay,
           ),
         ));
         // "Tentar de novo" (derrota) só faz `pop()` — volta pra esta mesma

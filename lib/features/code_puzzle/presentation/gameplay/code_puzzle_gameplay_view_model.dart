@@ -60,11 +60,23 @@ class CodePuzzleGameplayViewModel extends _$CodePuzzleGameplayViewModel {
   /// precisava mudar a resposta (achado do UX Reviewer).
   void clearSelectionAfterLoss() => state = state.copyWith(selectedLineIndex: null, sequenceIndices: const []);
 
+  /// Chamado pela View quando o jogador toca o ícone de "jogar de novo" na
+  /// tela de Vitória (`CodePuzzleResultView._buildWon`) — esse atalho faz
+  /// só um `pop()` de volta para esta mesma instância/provider (não recria
+  /// a fase do zero, ver `.claude/memory/decisions.md`, "Bug real
+  /// corrigido: `attempts` não resetava..."), então sem este reset
+  /// explícito `attempts` continuaria acumulando indefinidamente entre
+  /// replays rápidos, mesmo o jogador acertando de primeira em cada um.
+  /// Reseta para exatamente o estado que `build()` produziria —
+  /// `shuffledLines` continua o mesmo (seed fixa por `levelId`, não
+  /// depende do estado).
+  void resetForReplay() => state = CodePuzzleGameplayState(level: state.level);
+
   bool _checkWon() {
     switch (state.level.type) {
       case CodePuzzleType.reorder:
         final attempt = [for (final i in state.sequenceIndices) shuffledLines[i]];
-        return checkReorder(attempt, state.level.correctOrder);
+        return checkReorder(attempt, state.level.correctOrder, groupOf: state.level.groupOf);
       case CodePuzzleType.findBug:
         return checkFindBug(state.selectedLineIndex!, state.level.buggyLineIndex);
     }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
@@ -14,6 +15,8 @@ class LabeledTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final bool obscureText;
   final ValueChanged<String>? onChanged;
+  final List<TextInputFormatter>? inputFormatters;
+  final int? maxLength;
 
   const LabeledTextField({
     super.key,
@@ -23,6 +26,8 @@ class LabeledTextField extends StatelessWidget {
     this.keyboardType,
     this.obscureText = false,
     this.onChanged,
+    this.inputFormatters,
+    this.maxLength,
   });
 
   @override
@@ -36,6 +41,8 @@ class LabeledTextField extends StatelessWidget {
           controller: controller,
           keyboardType: keyboardType,
           obscureText: obscureText,
+          inputFormatters: inputFormatters,
+          maxLength: maxLength,
           style: AppText.style(size: 16, weight: FontWeight.w800, color: AppColors.white),
           decoration: InputDecoration(
             hintText: hint,
@@ -48,6 +55,7 @@ class LabeledTextField extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(color: AppColors.yellowNeon, width: 2),
             ),
+            counterText: maxLength != null ? '' : null,
           ),
           onChanged: onChanged,
         ),

@@ -118,6 +118,24 @@ void main() {
     expect(primaryButton().enabled, isTrue);
   });
 
+  testWidgets('idade absurda (acima de 120) não habilita o botão', (tester) async {
+    final container = buildContainer(auth: FakeAuthService(hasAccount: true, displayName: 'Ana'));
+    container.read(progressNotifierProvider.notifier).addSessionPoints(450);
+    await tester.pumpWidget(wrapForTest(container, const SurveyView()));
+    await tester.pump();
+
+    PrimaryPillButton primaryButton() => tester.widget<PrimaryPillButton>(find.byType(PrimaryPillButton));
+
+    await tester.enterText(find.byType(TextField), '999');
+    await tester.tap(find.text('Sim'));
+    await tester.pump();
+    expect(primaryButton().enabled, isFalse, reason: 'campo limita a 3 dígitos, mas 999 ainda passa do teto de idade');
+
+    await tester.enterText(find.byType(TextField), '30');
+    await tester.pump();
+    expect(primaryButton().enabled, isTrue);
+  });
+
   testWidgets('enviar a pesquisa registra a entrada no Placar (nome da conta) e navega mostrando o ranking', (tester) async {
     final container = buildContainer(auth: FakeAuthService(hasAccount: true, displayName: 'Ana'));
     container.read(progressNotifierProvider.notifier).addSessionPoints(450);

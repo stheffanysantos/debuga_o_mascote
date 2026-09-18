@@ -91,6 +91,7 @@ class PredictOutputGameplayView extends ConsumerWidget {
             hasNext: data.nextLevel != null,
             onPrimaryAction: () => _onResultPrimaryAction(context, ref, data),
             onBackToMenu: () => Navigator.of(context).popUntil((route) => route.settings.name == predictOutputStageSelectRouteName),
+            onReplaySameLevel: notifier.resetForReplay,
           ),
         ));
         // "Tentar de novo" (derrota) só faz `pop()` — mesmo cuidado dos

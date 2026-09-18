@@ -57,6 +57,21 @@ class CodePuzzleResultView extends ConsumerStatefulWidget {
   /// Chamado ao tocar "Menu" quando `won == false`.
   final VoidCallback onBackToMenu;
 
+  /// Chamado (sempre que fornecido), **antes** de dar `pop()`, ao tocar o
+  /// ícone pequeno de "jogar de novo" na tela de Vitória (`_buildWon`) —
+  /// diferente de "Próxima fase"/"Ver fases" (`onPrimaryAction`), este é o
+  /// atalho de "quero jogar esta mesma fase de novo, por diversão", sem sair
+  /// para a Seleção de Fases. Como esse atalho faz `pop()` de volta para a
+  /// **mesma** instância da Gameplay (o `ViewModel`/provider por trás não é
+  /// recriado — ver `.claude/memory/decisions.md`, "Bug real corrigido:
+  /// `attempts` não resetava..."), quem constrói esta tela deve usar este
+  /// callback para resetar o estado da fase (`attempts` etc.) de volta ao
+  /// que seria uma sessão nova — sem isso, `attempts` continuaria
+  /// acumulando indefinidamente a cada replay rápido, mesmo o jogador
+  /// acertando de primeira. `null` (default) só dá `pop()`, sem resetar
+  /// nada — usado por chamadores que não precisam desse cuidado.
+  final VoidCallback? onReplaySameLevel;
+
   const CodePuzzleResultView({
     super.key,
     required this.won,
@@ -69,6 +84,7 @@ class CodePuzzleResultView extends ConsumerStatefulWidget {
     required this.hasNext,
     required this.onPrimaryAction,
     required this.onBackToMenu,
+    this.onReplaySameLevel,
   });
 
   @override
@@ -161,12 +177,16 @@ class _CodePuzzleResultViewState extends ConsumerState<CodePuzzleResultView> {
                     Row(
                       children: [
                         IconActionButton(
+                          key: const Key('codePuzzleResultReplayButton'),
                           size: 72,
                           borderRadius: 22,
                           background: AppColors.purple,
                           shadowColor: AppColors.purpleShadow,
                           icon: AppIcons.refresh(size: 28, color: AppColors.white),
-                          onTap: () => Navigator.of(context).pop(),
+                          onTap: () {
+                            widget.onReplaySameLevel?.call();
+                            Navigator.of(context).pop();
+                          },
                         ),
                         const SizedBox(width: 10),
                         Expanded(

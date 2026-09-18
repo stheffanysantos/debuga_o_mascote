@@ -87,6 +87,7 @@ class CompleteCodeGameplayView extends ConsumerWidget {
             hasNext: data.nextLevel != null,
             onPrimaryAction: () => _onResultPrimaryAction(context, ref, data),
             onBackToMenu: () => Navigator.of(context).popUntil((route) => route.settings.name == completeCodeStageSelectRouteName),
+            onReplaySameLevel: notifier.resetForReplay,
           ),
         ));
         if (!data.won) notifier.clearSelectionAfterLoss();
@@ -122,6 +123,8 @@ class CompleteCodeGameplayView extends ConsumerWidget {
                 const SizedBox(height: 14),
                 _buildCodeCard(state),
                 const SizedBox(height: 14),
+                Text(level.question, style: AppText.style(size: 17, weight: FontWeight.w900, color: AppColors.white)),
+                const SizedBox(height: 10),
                 Text('ESCOLHA A LINHA CERTA', style: AppText.eyebrow(size: 11)),
                 const SizedBox(height: 8),
                 for (var i = 0; i < level.options.length; i++) _buildOption(state, notifier, i),

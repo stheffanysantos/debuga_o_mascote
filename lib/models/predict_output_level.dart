@@ -202,7 +202,7 @@ final world3Levels = <PredictOutputLevel>[
       CodeLine('}'),
       CodeLine('print(total);'),
     ],
-    question: 'Quantos números pares tem entre 1 e 5?',
+    question: 'O que aparece na tela?',
     options: const ['3', '2', '5'],
     correctOptionIndex: 1,
     explanation: '2 e 4 são pares — total = 2.',

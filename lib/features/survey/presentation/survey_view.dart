@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/auth_providers.dart';
@@ -41,9 +42,11 @@ class _SurveyViewState extends ConsumerState<SurveyView> {
     super.dispose();
   }
 
+  static const _maxAge = 120;
+
   bool get _canSubmit {
     final age = int.tryParse(_ageController.text);
-    return age != null && age > 0 && _hasProgrammedBefore != null;
+    return age != null && age > 0 && age <= _maxAge && _hasProgrammedBefore != null;
   }
 
   Future<void> _submit() async {
@@ -108,6 +111,8 @@ class _SurveyViewState extends ConsumerState<SurveyView> {
                             controller: _ageController,
                             hint: 'Quantos anos você tem?',
                             keyboardType: TextInputType.number,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            maxLength: 3,
                             onChanged: (_) => setState(() {}),
                           ),
                           const SizedBox(height: 20),
