@@ -7,7 +7,7 @@ part of 'onboarding_notifier.dart';
 // **************************************************************************
 
 String _$onboardingNotifierHash() =>
-    r'9c031bad1217831536117f85eb628d89f305d535';
+    r'f20015fa3f216adb5c7ce4cd98cd02a9f352ebee';
 
 /// `SplashView` consulta `seenWelcome` antes de navegar ao tocar "JOGAR"; se
 /// `false`, empurra `WelcomeView` (3 slides + escolha de conta) em vez de ir
@@ -15,6 +15,14 @@ String _$onboardingNotifierHash() =>
 /// antes de navegar; se `false`, empurra a `TutorialView` do mundo em vez de
 /// navegar direto, e `markSeen` é chamado quando o jogador termina o
 /// tutorial. `keepAlive: true` — pelo mesmo motivo de `ProgressNotifier`.
+///
+/// Persistido via `OnboardingRepository` (device-local, `shared_preferences`)
+/// — antes ficava só em memória e resetava a cada reload da página/restart
+/// do app, mostrando a apresentação da Libug/Lili de novo a cada visita
+/// (achado real do usuário). `build()` devolve o estado vazio
+/// **sincronamente** e hidrata como `Future` fire-and-forget, mesmo padrão
+/// de `ProgressNotifier` — o jogo não espera a leitura do storage pra
+/// renderizar a Splash.
 ///
 /// Copied from [OnboardingNotifier].
 @ProviderFor(OnboardingNotifier)

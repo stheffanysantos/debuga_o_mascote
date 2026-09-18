@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'auth_service.dart';
@@ -10,6 +11,13 @@ import 'auth_service.dart';
 /// inicializado) vira uma `String?` de erro em pt-BR — mesmo princípio de
 /// nunca deixar infraestrutura derrubar o jogo já usado em
 /// `FirebaseLeaderboardRepository`.
+///
+/// Quando o login troca de UID de verdade (linkar falha e cai pra uma conta
+/// pré-existente de outro aparelho, `signInWithGoogle`; ou login direto por
+/// e-mail/senha, `signInWithEmail`), o documento `players/{uid}` da sessão
+/// anônima abandonada é apagado antes da troca (`_deleteOrphanedAnonymousDoc`)
+/// — pedido explícito do usuário, pra não acumular UID de sessão sem uso no
+/// Firestore. Ver `.claude/memory/decisions.md`.
 class FirebaseAuthService implements AuthService {
   @override
   bool get hasAccount {
@@ -63,6 +71,14 @@ class FirebaseAuthService implements AuthService {
 
   @override
   Future<String?> signInWithEmail({required String email, required String password}) async {
+    // Se havia uma sessão anônima (jogou sem conta neste aparelho antes de
+    // logar numa conta já existente), esse UID vai ficar órfão no Firestore
+    // depois do login — apaga **antes** de trocar de sessão, enquanto ainda
+    // é o próprio dono do documento (as regras do Firestore só deixam um
+    // UID apagar o seu próprio `players/{uid}`; depois de logar, o app já
+    // é outro UID e não teria mais permissão). Ver `.claude/memory/decisions.md`.
+    final anonymousUid = _currentAnonymousUidOrNull();
+    if (anonymousUid != null) await _deleteOrphanedAnonymousDoc(anonymousUid);
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
       return null;
@@ -90,6 +106,13 @@ class FirebaseAuthService implements AuthService {
       // de tentar recuperar a credencial do erro (não confiável nas versões
       // recentes do SDK).
       if (e.code == 'credential-already-in-use' || e.code == 'provider-already-linked' || e.code == 'email-already-in-use') {
+        // Mesmo motivo do `signInWithEmail` acima — apaga o UID anônimo
+        // órfão **antes** de trocar de sessão (senão perde a permissão de
+        // apagá-lo). O progresso local em memória não se perde com isso —
+        // já vai ser mesclado/regravado sob o UID novo pelo
+        // `ProgressNotifier.rehydrate()` chamado depois deste login.
+        final anonymousUid = _currentAnonymousUidOrNull();
+        if (anonymousUid != null) await _deleteOrphanedAnonymousDoc(anonymousUid);
         try {
           await FirebaseAuth.instance.signInWithProvider(provider);
           return null;
@@ -109,6 +132,26 @@ class FirebaseAuthService implements AuthService {
       await FirebaseAuth.instance.signOut();
     } catch (_) {
       // Nunca deve travar o fluxo de "próximo jogador" no estande.
+    }
+  }
+
+  String? _currentAnonymousUidOrNull() {
+    final user = FirebaseAuth.instance.currentUser;
+    return (user != null && user.isAnonymous) ? user.uid : null;
+  }
+
+  /// Apaga `players/{uid}` da sessão anônima que está sendo abandonada —
+  /// pedido explícito do usuário, pra não acumular documento de conta sem
+  /// uso no Firestore. Só `players/{uid}` (não `scores/{uid}`, cujas regras
+  /// já proíbem delete de propósito — histórico do Placar é imutável, ver
+  /// `firestore.rules`). Best-effort: qualquer falha (sem internet, regra
+  /// negando por já ter trocado de sessão, etc.) é engolida — limpeza nunca
+  /// pode travar um login de verdade.
+  Future<void> _deleteOrphanedAnonymousDoc(String uid) async {
+    try {
+      await FirebaseFirestore.instance.collection('players').doc(uid).delete();
+    } catch (_) {
+      // Best-effort — ver comentário acima.
     }
   }
 

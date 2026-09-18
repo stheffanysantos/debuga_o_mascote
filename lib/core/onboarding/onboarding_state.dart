@@ -4,8 +4,8 @@ part 'onboarding_state.freezed.dart';
 
 /// Controla se o tutorial de um Mundo já foi visto, e se o jogador já passou
 /// pelo intro de boas-vindas (`welcomeSlides`, `lib/widgets/tutorial_content.dart`)
-/// — sessão apenas (reinicia ao reabrir o app, decisão de persistência entre
-/// sessões ainda em aberto, ver `.claude/memory/decisions.md`).
+/// — persistido por `OnboardingRepository` (device-local, `shared_preferences`),
+/// sobrevive a reabrir o app/recarregar a página. Ver `.claude/memory/decisions.md`.
 @freezed
 class OnboardingState with _$OnboardingState {
   const factory OnboardingState({
