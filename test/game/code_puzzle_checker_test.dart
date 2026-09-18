@@ -49,7 +49,7 @@ void main() {
       expect(checkReorder(attempt, correct), isFalse);
     });
 
-    // Regressão: Fase 2 do Mundo 5 (`world5_level2`) — "int a = 2;"/
+    // Regressão: Fase 2 do Mundo 7 (`world7_level2`) — "int a = 2;"/
     // "int b = 3;" são independentes entre si, ambas só precisam vir antes
     // de "print(a + b);". Ver `.claude/memory/decisions.md`.
     group('linhas intercambiáveis (groupOf)', () {

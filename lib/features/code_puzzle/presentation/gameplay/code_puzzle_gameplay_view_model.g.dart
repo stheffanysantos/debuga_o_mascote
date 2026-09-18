@@ -7,7 +7,7 @@ part of 'code_puzzle_gameplay_view_model.dart';
 // **************************************************************************
 
 String _$codePuzzleGameplayViewModelHash() =>
-    r'5441a0ec54c14231f9025fa86163f29fd86cf160';
+    r'8897c3eba6b72f6bf978c72f7efa5ccfa42d5b44';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -37,7 +37,7 @@ abstract class _$CodePuzzleGameplayViewModel
   CodePuzzleGameplayState build(String levelId);
 }
 
-/// ViewModel da Gameplay do Mundo 5 ("Modo Debug") — mesma forma de
+/// ViewModel da Gameplay do Mundo 7 ("Modo Debug") — mesma forma de
 /// `PredictOutputGameplayViewModel`/`CompleteCodeGameplayViewModel`: sem
 /// passo a passo, cada `confirm()` é um veredito único. Família por
 /// `levelId`.
@@ -46,7 +46,7 @@ abstract class _$CodePuzzleGameplayViewModel
 @ProviderFor(CodePuzzleGameplayViewModel)
 const codePuzzleGameplayViewModelProvider = CodePuzzleGameplayViewModelFamily();
 
-/// ViewModel da Gameplay do Mundo 5 ("Modo Debug") — mesma forma de
+/// ViewModel da Gameplay do Mundo 7 ("Modo Debug") — mesma forma de
 /// `PredictOutputGameplayViewModel`/`CompleteCodeGameplayViewModel`: sem
 /// passo a passo, cada `confirm()` é um veredito único. Família por
 /// `levelId`.
@@ -54,7 +54,7 @@ const codePuzzleGameplayViewModelProvider = CodePuzzleGameplayViewModelFamily();
 /// Copied from [CodePuzzleGameplayViewModel].
 class CodePuzzleGameplayViewModelFamily
     extends Family<CodePuzzleGameplayState> {
-  /// ViewModel da Gameplay do Mundo 5 ("Modo Debug") — mesma forma de
+  /// ViewModel da Gameplay do Mundo 7 ("Modo Debug") — mesma forma de
   /// `PredictOutputGameplayViewModel`/`CompleteCodeGameplayViewModel`: sem
   /// passo a passo, cada `confirm()` é um veredito único. Família por
   /// `levelId`.
@@ -62,7 +62,7 @@ class CodePuzzleGameplayViewModelFamily
   /// Copied from [CodePuzzleGameplayViewModel].
   const CodePuzzleGameplayViewModelFamily();
 
-  /// ViewModel da Gameplay do Mundo 5 ("Modo Debug") — mesma forma de
+  /// ViewModel da Gameplay do Mundo 7 ("Modo Debug") — mesma forma de
   /// `PredictOutputGameplayViewModel`/`CompleteCodeGameplayViewModel`: sem
   /// passo a passo, cada `confirm()` é um veredito único. Família por
   /// `levelId`.
@@ -94,7 +94,7 @@ class CodePuzzleGameplayViewModelFamily
   String? get name => r'codePuzzleGameplayViewModelProvider';
 }
 
-/// ViewModel da Gameplay do Mundo 5 ("Modo Debug") — mesma forma de
+/// ViewModel da Gameplay do Mundo 7 ("Modo Debug") — mesma forma de
 /// `PredictOutputGameplayViewModel`/`CompleteCodeGameplayViewModel`: sem
 /// passo a passo, cada `confirm()` é um veredito único. Família por
 /// `levelId`.
@@ -106,7 +106,7 @@ class CodePuzzleGameplayViewModelProvider
           CodePuzzleGameplayViewModel,
           CodePuzzleGameplayState
         > {
-  /// ViewModel da Gameplay do Mundo 5 ("Modo Debug") — mesma forma de
+  /// ViewModel da Gameplay do Mundo 7 ("Modo Debug") — mesma forma de
   /// `PredictOutputGameplayViewModel`/`CompleteCodeGameplayViewModel`: sem
   /// passo a passo, cada `confirm()` é um veredito único. Família por
   /// `levelId`.

@@ -64,11 +64,11 @@ void _onResultPrimaryAction(BuildContext context, WidgetRef ref, PredictOutputRe
   _returnToLevelSelect(context, ref, worldNumber: data.worldNumber, worldJustCompleted: data.worldJustCompleted);
 }
 
-/// Gameplay do Mundo 3 ("Preveja a Saída") — mostra um trecho de código real
+/// Gameplay do Mundo 5 ("Preveja a Saída") — mostra um trecho de código real
 /// (só leitura, já na ordem certa) e uma pergunta de múltipla escolha sobre
 /// o resultado. Sem execução passo a passo, sem embaralhar/editar nada —
 /// cada "Confirmar" é um veredito único, mesma família de
-/// `CodePuzzleGameplayView` (Mundo 5) e `CompleteCodeGameplayView` (Mundo 4).
+/// `CodePuzzleGameplayView` (Mundo 7) e `CompleteCodeGameplayView` (Mundo 6).
 /// Ver `.claude/docs/GAME_DESIGN.md`.
 class PredictOutputGameplayView extends ConsumerWidget {
   final String levelId;

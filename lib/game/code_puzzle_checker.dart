@@ -1,9 +1,9 @@
 import '../models/code_line.dart';
 
-/// "Motor" do Mundo 5 ("Modo Debug") — mais simples que `ProgramExecutor`
+/// "Motor" do Mundo 7 ("Modo Debug") — mais simples que `ProgramExecutor`
 /// (Mundo 1) e `BeltExecutor` (Mundo 2): não há passo a passo nem cursor,
 /// cada fase é um veredito único por tentativa. Ver
-/// `.claude/docs/GAME_DESIGN.md`, seção "Mundo 5 — Modo Debug".
+/// `.claude/docs/GAME_DESIGN.md`, seção "Mundo 7 — Modo Debug".
 
 /// Compara a sequência montada pelo jogador com a ordem certa da fase —
 /// por **grupo**, não posição a posição. `groupOf` (mesmo índice de
@@ -13,7 +13,7 @@ import '../models/code_line.dart';
 /// obrigatória. Sem `groupOf` (ou com um grupo por linha, o padrão de
 /// `CodePuzzleLevel.reorder`), o comportamento é idêntico ao antigo
 /// "ordem exata" — generalização sem quebrar fases já corretas. Ver
-/// `.claude/docs/GAME_DESIGN.md`, seção "Mundo 5 — Modo Debug", e
+/// `.claude/docs/GAME_DESIGN.md`, seção "Mundo 7 — Modo Debug", e
 /// `.claude/memory/decisions.md`.
 ///
 /// `true` só se `attempt`/`correct` têm o mesmo tamanho e, para cada grupo

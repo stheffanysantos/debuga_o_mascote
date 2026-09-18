@@ -1,12 +1,12 @@
 import 'code_line.dart';
 import 'game_level.dart';
 
-/// Uma fase do Mundo 4 ("Complete o Código"): o jogador vê um trecho de
+/// Uma fase do Mundo 6 ("Complete o Código"): o jogador vê um trecho de
 /// código real com 1 linha em branco (`blankLineIndex`) e escolhe, por
 /// múltipla escolha, qual das `options` completa certo. Ver
-/// `.claude/docs/GAME_DESIGN.md`, seção "Mundo 4 — Complete o Código".
-/// Mesma família de "veredito único" do Mundo 3 ("Preveja a Saída") e do
-/// Mundo 5 ("Modo Debug") — mas aqui o jogador já escolhe uma linha de
+/// `.claude/docs/GAME_DESIGN.md`, seção "Mundo 6 — Complete o Código".
+/// Mesma família de "veredito único" do Mundo 5 ("Preveja a Saída") e do
+/// Mundo 7 ("Modo Debug") — mas aqui o jogador já escolhe uma linha de
 /// código de verdade (não só uma resposta em texto livre), um degrau mais
 /// perto de `reorder`/`findBug`.
 class CompleteCodeLevel implements GameLevel {
@@ -23,7 +23,7 @@ class CompleteCodeLevel implements GameLevel {
   final String title;
 
   /// Pergunta de contexto mostrada junto do trecho de código — mesmo papel
-  /// de `PredictOutputLevel.question` (Mundo 3): sem ela, `title` sozinho
+  /// de `PredictOutputLevel.question` (Mundo 5): sem ela, `title` sozinho
   /// não bastava para o jogador saber o que o código deveria fazer/exibir
   /// (achado real de testador), e a Fase 12 chegava a admitir mais de uma
   /// opção como "certa" sem um alvo explícito de saída. Sempre deixa
@@ -49,7 +49,7 @@ class CompleteCodeLevel implements GameLevel {
 
   /// Frase curta explicando por que essa é a linha certa — mostrada sempre
   /// (ganhou ou perdeu), mesmo papel de `bugExplanation`/`explanation` dos
-  /// Mundos 5/3.
+  /// Mundos 7/5.
   final String explanation;
 
   const CompleteCodeLevel({
@@ -66,17 +66,18 @@ class CompleteCodeLevel implements GameLevel {
   });
 }
 
-/// As 12 fases do Mundo 4 ("Complete o Código"): reaproveita os mesmos
-/// trechos/vocabulário do Mundo 5 ("Modo Debug" — `if`/`else`/`for`/
+/// As 12 fases do Mundo 6 ("Complete o Código"): reaproveita os mesmos
+/// trechos/vocabulário do Mundo 7 ("Modo Debug" — `if`/`else`/`for`/
 /// `while`/funções/listas), mas em vez de reordenar linhas embaralhadas ou
 /// achar uma linha errada já colocada, o jogador escolhe qual linha
-/// **preenche** um espaço em branco — ponte entre "ler código" (Mundo 3) e
-/// "montar/consertar código" (Mundo 5, na Trilha 2). Dados consistentes
-/// verificados em `test/game/complete_code_catalog_test.dart`.
-final world4Levels = <CompleteCodeLevel>[
+/// **preenche** um espaço em branco — ponte entre "ler código" (Mundo 5) e
+/// "montar/consertar código" (Mundo 7), os 3 mundos que formam a Trilha 3
+/// ("Modo Programador"). Dados consistentes verificados em
+/// `test/game/complete_code_catalog_test.dart`.
+final world6Levels = <CompleteCodeLevel>[
   CompleteCodeLevel(
-    id: 'world4_level1',
-    world: 4,
+    id: 'world6_level1',
+    world: 6,
     number: 1,
     title: 'Complete a soma',
     question: 'Qual linha faz o código somar a e b, para que "soma" valha 7 e o print mostre 7?',
@@ -96,8 +97,8 @@ final world4Levels = <CompleteCodeLevel>[
     explanation: 'Para somar dois números, usamos a + b.',
   ),
   CompleteCodeLevel(
-    id: 'world4_level2',
-    world: 4,
+    id: 'world6_level2',
+    world: 6,
     number: 2,
     title: 'Complete a condição',
     question: 'Qual linha completa a condição para que o código imprima "Maior de idade" quando idade for 20?',
@@ -117,8 +118,8 @@ final world4Levels = <CompleteCodeLevel>[
     explanation: 'Precisamos verificar se idade é maior ou igual a 18 — o sinal certo é >=.',
   ),
   CompleteCodeLevel(
-    id: 'world4_level3',
-    world: 4,
+    id: 'world6_level3',
+    world: 6,
     number: 3,
     title: 'Complete o laço',
     question: 'Qual linha faz o laço imprimir 0, 1 e 2, nessa ordem?',
@@ -137,8 +138,8 @@ final world4Levels = <CompleteCodeLevel>[
     explanation: 'O laço precisa começar em 0 e continuar enquanto i for menor que 3.',
   ),
   CompleteCodeLevel(
-    id: 'world4_level4',
-    world: 4,
+    id: 'world6_level4',
+    world: 6,
     number: 4,
     title: 'Complete o retorno',
     question: 'Qual linha faz a função devolver o dobro do número recebido?',
@@ -157,8 +158,8 @@ final world4Levels = <CompleteCodeLevel>[
     explanation: 'Dobro significa multiplicar por 2.',
   ),
   CompleteCodeLevel(
-    id: 'world4_level5',
-    world: 4,
+    id: 'world6_level5',
+    world: 6,
     number: 5,
     title: 'Se, senão',
     question: 'Qual linha fecha o bloco do "se" e abre o do "senão", para que o código imprima "Reprovado" quando a nota for 4?',
@@ -180,8 +181,8 @@ final world4Levels = <CompleteCodeLevel>[
     explanation: '"} else {" fecha o bloco do if e abre o do senão, sem repetir a condição.',
   ),
   CompleteCodeLevel(
-    id: 'world4_level6',
-    world: 4,
+    id: 'world6_level6',
+    world: 6,
     number: 6,
     title: 'Complete a soma no laço',
     question: 'Qual linha faz o laço somar todos os números de 1 a 5, para que o código imprima 15?',
@@ -202,8 +203,8 @@ final world4Levels = <CompleteCodeLevel>[
     explanation: 'Para acumular a soma, cada volta soma i ao total já existente.',
   ),
   CompleteCodeLevel(
-    id: 'world4_level7',
-    world: 4,
+    id: 'world6_level7',
+    world: 6,
     number: 7,
     title: 'Complete o enquanto',
     question: 'Qual linha faz o laço repetir enquanto o contador for menor que 5, parando exatamente quando chegar a 5?',
@@ -223,8 +224,8 @@ final world4Levels = <CompleteCodeLevel>[
     explanation: 'Queremos repetir enquanto contador for menor que 5 — "while", não "if" (que roda só uma vez).',
   ),
   CompleteCodeLevel(
-    id: 'world4_level8',
-    world: 4,
+    id: 'world6_level8',
+    world: 6,
     number: 8,
     title: 'Complete a comparação',
     question: 'Qual linha faz a função devolver verdadeiro quando o número recebido for par?',
@@ -243,8 +244,8 @@ final world4Levels = <CompleteCodeLevel>[
     explanation: 'Um número é par quando o resto da divisão por 2 é 0.',
   ),
   CompleteCodeLevel(
-    id: 'world4_level9',
-    world: 4,
+    id: 'world6_level9',
+    world: 6,
     number: 9,
     title: 'Complete a lista',
     question: 'Qual linha declara corretamente a lista de números inteiros, para que o laço some 1 + 2 + 3 sem erro?',
@@ -265,8 +266,8 @@ final world4Levels = <CompleteCodeLevel>[
     explanation: 'Uma lista de números inteiros se declara com "List<int>".',
   ),
   CompleteCodeLevel(
-    id: 'world4_level10',
-    world: 4,
+    id: 'world6_level10',
+    world: 6,
     number: 10,
     title: 'Complete o "senão se"',
     question: 'Qual linha completa a segunda condição, para que o código imprima "Bom" quando a nota for 6?',
@@ -290,8 +291,8 @@ final world4Levels = <CompleteCodeLevel>[
     explanation: '"else if" testa uma segunda condição só quando a primeira for falsa.',
   ),
   CompleteCodeLevel(
-    id: 'world4_level11',
-    world: 4,
+    id: 'world6_level11',
+    world: 6,
     number: 11,
     title: 'Complete a função com parâmetros',
     question: 'Qual linha declara corretamente os parâmetros da função, para que soma(2, 3) funcione sem erro?',
@@ -310,8 +311,8 @@ final world4Levels = <CompleteCodeLevel>[
     explanation: 'Em Dart, toda função precisa declarar o tipo de cada parâmetro — "int a, int b".',
   ),
   CompleteCodeLevel(
-    id: 'world4_level12',
-    world: 4,
+    id: 'world6_level12',
+    world: 6,
     number: 12,
     title: 'Complete o laço com condição',
     question: 'Qual linha faz o código somar os números de 1 a 3, pulando o 2, para que o print mostre exatamente 4?',

@@ -4,8 +4,8 @@ import '../../../../models/complete_code_level.dart';
 
 part 'complete_code_gameplay_state.freezed.dart';
 
-/// Estado da Gameplay do Mundo 4 ("Complete o Código") — mesma forma de
-/// `PredictOutputGameplayState` (Mundo 3): veredito único por tentativa,
+/// Estado da Gameplay do Mundo 6 ("Complete o Código") — mesma forma de
+/// `PredictOutputGameplayState` (Mundo 5): veredito único por tentativa,
 /// sem passo a passo.
 @freezed
 class CompleteCodeGameplayState with _$CompleteCodeGameplayState {

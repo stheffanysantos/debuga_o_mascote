@@ -7,7 +7,7 @@ part of 'predict_output_gameplay_view_model.dart';
 // **************************************************************************
 
 String _$predictOutputGameplayViewModelHash() =>
-    r'2f175021995b348ae5de787677c7c18008a2b9a1';
+    r'7529c71c77c44d6e516c2e84a99773e3117237c9';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -37,7 +37,7 @@ abstract class _$PredictOutputGameplayViewModel
   PredictOutputGameplayState build(String levelId);
 }
 
-/// ViewModel da Gameplay do Mundo 3 ("Preveja a Saída") — sem passo a passo
+/// ViewModel da Gameplay do Mundo 5 ("Preveja a Saída") — sem passo a passo
 /// (diferente de `GameplayViewModel`/`ConveyorGameplayViewModel`): cada
 /// `confirm()` é um veredito único, calculado na hora a partir da opção
 /// escolhida. Família por `levelId`.
@@ -47,7 +47,7 @@ abstract class _$PredictOutputGameplayViewModel
 const predictOutputGameplayViewModelProvider =
     PredictOutputGameplayViewModelFamily();
 
-/// ViewModel da Gameplay do Mundo 3 ("Preveja a Saída") — sem passo a passo
+/// ViewModel da Gameplay do Mundo 5 ("Preveja a Saída") — sem passo a passo
 /// (diferente de `GameplayViewModel`/`ConveyorGameplayViewModel`): cada
 /// `confirm()` é um veredito único, calculado na hora a partir da opção
 /// escolhida. Família por `levelId`.
@@ -55,7 +55,7 @@ const predictOutputGameplayViewModelProvider =
 /// Copied from [PredictOutputGameplayViewModel].
 class PredictOutputGameplayViewModelFamily
     extends Family<PredictOutputGameplayState> {
-  /// ViewModel da Gameplay do Mundo 3 ("Preveja a Saída") — sem passo a passo
+  /// ViewModel da Gameplay do Mundo 5 ("Preveja a Saída") — sem passo a passo
   /// (diferente de `GameplayViewModel`/`ConveyorGameplayViewModel`): cada
   /// `confirm()` é um veredito único, calculado na hora a partir da opção
   /// escolhida. Família por `levelId`.
@@ -63,7 +63,7 @@ class PredictOutputGameplayViewModelFamily
   /// Copied from [PredictOutputGameplayViewModel].
   const PredictOutputGameplayViewModelFamily();
 
-  /// ViewModel da Gameplay do Mundo 3 ("Preveja a Saída") — sem passo a passo
+  /// ViewModel da Gameplay do Mundo 5 ("Preveja a Saída") — sem passo a passo
   /// (diferente de `GameplayViewModel`/`ConveyorGameplayViewModel`): cada
   /// `confirm()` é um veredito único, calculado na hora a partir da opção
   /// escolhida. Família por `levelId`.
@@ -95,7 +95,7 @@ class PredictOutputGameplayViewModelFamily
   String? get name => r'predictOutputGameplayViewModelProvider';
 }
 
-/// ViewModel da Gameplay do Mundo 3 ("Preveja a Saída") — sem passo a passo
+/// ViewModel da Gameplay do Mundo 5 ("Preveja a Saída") — sem passo a passo
 /// (diferente de `GameplayViewModel`/`ConveyorGameplayViewModel`): cada
 /// `confirm()` é um veredito único, calculado na hora a partir da opção
 /// escolhida. Família por `levelId`.
@@ -107,7 +107,7 @@ class PredictOutputGameplayViewModelProvider
           PredictOutputGameplayViewModel,
           PredictOutputGameplayState
         > {
-  /// ViewModel da Gameplay do Mundo 3 ("Preveja a Saída") — sem passo a passo
+  /// ViewModel da Gameplay do Mundo 5 ("Preveja a Saída") — sem passo a passo
   /// (diferente de `GameplayViewModel`/`ConveyorGameplayViewModel`): cada
   /// `confirm()` é um veredito único, calculado na hora a partir da opção
   /// escolhida. Família por `levelId`.

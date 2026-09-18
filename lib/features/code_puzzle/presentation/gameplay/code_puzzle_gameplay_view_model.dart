@@ -12,7 +12,7 @@ import 'code_puzzle_gameplay_state.dart';
 
 part 'code_puzzle_gameplay_view_model.g.dart';
 
-/// ViewModel da Gameplay do Mundo 5 ("Modo Debug") — mesma forma de
+/// ViewModel da Gameplay do Mundo 7 ("Modo Debug") — mesma forma de
 /// `PredictOutputGameplayViewModel`/`CompleteCodeGameplayViewModel`: sem
 /// passo a passo, cada `confirm()` é um veredito único. Família por
 /// `levelId`.
@@ -28,7 +28,7 @@ class CodePuzzleGameplayViewModel extends _$CodePuzzleGameplayViewModel {
 
   @override
   CodePuzzleGameplayState build(String levelId) {
-    final level = world5Levels.firstWhere((l) => l.id == levelId);
+    final level = world7Levels.firstWhere((l) => l.id == levelId);
     shuffledLines = List<CodeLine>.of(level.correctOrder)..shuffle(Random(level.id.hashCode));
     return CodePuzzleGameplayState(level: level);
   }

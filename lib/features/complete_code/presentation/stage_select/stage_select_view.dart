@@ -20,9 +20,9 @@ import '../gameplay/complete_code_gameplay_view.dart';
 /// `conveyorLevelSelectRouteName`/`predictOutputStageSelectRouteName`.
 const completeCodeStageSelectRouteName = 'complete-code-stage-select';
 
-/// Seleção de Fases do Mundo 4 (Complete o Código) — mesmo papel de
+/// Seleção de Fases do Mundo 6 (Complete o Código) — mesmo papel de
 /// `StageSelectView` (Mundo 1), adaptado para `CompleteCodeLevel`/
-/// `world4Levels`.
+/// `world6Levels`.
 class CompleteCodeStageSelectView extends ConsumerWidget {
   final GameWorld world;
 

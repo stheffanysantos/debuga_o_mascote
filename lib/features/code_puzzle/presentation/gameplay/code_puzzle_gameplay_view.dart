@@ -24,10 +24,10 @@ import 'code_puzzle_gameplay_view_model.dart';
 /// Volta pra Seleção de Fases — a menos que o Mundo que acabou de fechar
 /// agora seja o último da Trilha 1 e o jogador ainda não tenha conta, caso
 /// em que empurra `RegisterView` primeiro (gate de fim de Trilha, ver
-/// `.claude/memory/decisions.md`). Hoje é o único dos 5 Gameplay onde esse
-/// gate realmente entra em jogo (Mundo 5 é o último da Trilha 1). Sempre tem
-/// uma saída ("Continuar sem conta por enquanto") — nunca trava o app se o
-/// Firebase estiver indisponível.
+/// `.claude/memory/decisions.md`). Mesmo padrão dos outros mundos — hoje o
+/// gate real dispara ao terminar o Mundo 2 (Resgate de Personagens, fim da
+/// Trilha 1), não o Mundo 7. Sempre tem uma saída ("Continuar sem conta por enquanto") —
+/// nunca trava o app se o Firebase estiver indisponível.
 void _returnToLevelSelect(BuildContext context, WidgetRef ref, {required int worldNumber, required bool worldJustCompleted}) {
   final isEndOfTrack1 = worldJustCompleted && worldNumber == tracks.first.worlds.last.number;
   if (isEndOfTrack1 && !ref.read(authServiceProvider).hasAccount) {
@@ -44,7 +44,7 @@ void _returnToLevelSelect(BuildContext context, WidgetRef ref, {required int wor
 
 void _onResultPrimaryAction(BuildContext context, WidgetRef ref, CodePuzzleGameplayResultData data) {
   if (data.nextLevel != null) {
-    // Volta à mesma instância da Seleção de Fases do Mundo 5 já na pilha
+    // Volta à mesma instância da Seleção de Fases do Mundo 7 já na pilha
     // (em vez de criar outra) e joga a próxima fase direto na sequência.
     Navigator.of(context).popUntil((route) => route.settings.name == codePuzzleStageSelectRouteName);
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => CodePuzzleGameplayView(levelId: data.nextLevel!.id)));
@@ -68,7 +68,7 @@ void _onResultPrimaryAction(BuildContext context, WidgetRef ref, CodePuzzleGamep
   _returnToLevelSelect(context, ref, worldNumber: data.worldNumber, worldJustCompleted: data.worldJustCompleted);
 }
 
-/// Gameplay do Mundo 5 ("Modo Debug") — alterna o conteúdo central pelo
+/// Gameplay do Mundo 7 ("Modo Debug") — alterna o conteúdo central pelo
 /// `CodePuzzleType` da fase: `reorder` (montar a sequência certa tocando
 /// linhas embaralhadas, mesmo padrão de tap-para-montar dos outros mundos)
 /// ou `findBug` (tocar a linha com o erro). Sem execução passo a passo —

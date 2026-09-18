@@ -3,23 +3,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:debuga_o_mascote/game/code_puzzle_checker.dart';
 import 'package:debuga_o_mascote/models/code_puzzle_level.dart';
 
-/// Garante que toda fase de `world5Levels` (Mundo 5) tem dados consistentes — ver
+/// Garante que toda fase de `world7Levels` (Mundo 7) tem dados consistentes — ver
 /// `.claude/reviews/checklist-level.md`. Diferente de
 /// `level_catalog_test.dart`/`conveyor_level_catalog_test.dart` (que rodam
 /// um `hintProgram` contra um motor passo a passo), aqui a "solução" de
 /// cada fase é o próprio `correctOrder`/`buggyLineIndex` guardado no
 /// modelo — não existe um Programa separado a expandir/executar.
 void main() {
-  test('world5Levels tem 12 fases com ids únicos e estáveis', () {
-    expect(world5Levels.length, 12);
-    expect(world5Levels.map((l) => l.id).toSet().length, 12);
-    expect(world5Levels.every((l) => l.world == 5), isTrue);
-    for (var i = 0; i < world5Levels.length; i++) {
-      expect(world5Levels[i].number, i + 1);
+  test('world7Levels tem 12 fases com ids únicos e estáveis', () {
+    expect(world7Levels.length, 12);
+    expect(world7Levels.map((l) => l.id).toSet().length, 12);
+    expect(world7Levels.every((l) => l.world == 7), isTrue);
+    for (var i = 0; i < world7Levels.length; i++) {
+      expect(world7Levels[i].number, i + 1);
     }
   });
 
-  for (final level in world5Levels) {
+  for (final level in world7Levels) {
     test('${level.id} (Fase ${level.number}): dados consistentes com o tipo declarado', () {
       switch (level.type) {
         case CodePuzzleType.reorder:
@@ -61,10 +61,10 @@ void main() {
   }
 
   test('mistura reorder/findBug a partir da metade das fases', () {
-    final firstHalf = world5Levels.take(6);
+    final firstHalf = world7Levels.take(6);
     expect(firstHalf.every((l) => l.type == CodePuzzleType.reorder), isTrue);
 
-    final secondHalf = world5Levels.skip(6);
+    final secondHalf = world7Levels.skip(6);
     expect(secondHalf.any((l) => l.type == CodePuzzleType.findBug), isTrue);
   });
 }

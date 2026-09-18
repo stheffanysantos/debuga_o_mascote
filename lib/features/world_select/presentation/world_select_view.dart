@@ -15,9 +15,9 @@ import '../../../widgets/hard_shadow_box_widget.dart';
 import '../../../widgets/icon_action_button_widget.dart';
 import '../../../widgets/tutorial_content.dart';
 import '../../../widgets/zigzag_map_widget.dart';
+import '../../block_program/presentation/stage_select/stage_select_view.dart' show BlockProgramStageSelectView, blockProgramLevelSelectRouteName;
 import '../../code_puzzle/presentation/stage_select/stage_select_view.dart' show CodePuzzleStageSelectView, codePuzzleStageSelectRouteName;
 import '../../complete_code/presentation/stage_select/stage_select_view.dart' show CompleteCodeStageSelectView, completeCodeStageSelectRouteName;
-import '../../conveyor/presentation/stage_select/stage_select_view.dart' show ConveyorStageSelectView, conveyorLevelSelectRouteName;
 import '../../leaderboard/presentation/leaderboard_view.dart';
 import '../../maze/presentation/stage_select/stage_select_view.dart';
 import '../../predict_output/presentation/stage_select/stage_select_view.dart' show PredictOutputStageSelectView, predictOutputStageSelectRouteName;
@@ -33,11 +33,11 @@ const _debugUnlockAllWorlds = true;
 
 /// Tela 1.5 — Seleção de Mundo, primeira tela depois da Splash. Lista, uma
 /// abaixo da outra, um card por `GameTrack` (`tracks`, `lib/models/game_track.dart`)
-/// — Trilha 1 ("TRILHA 1 - FUNDAMENTOS", Mundos 1-3) e Trilha 2 ("TRILHA 2 -
-/// AVANÇADO", Mundos 4-5) —, cada uma com o mapa em zigue-zague
-/// (`ZigzagMap`) dos seus mundos logo abaixo do card. Pedido explícito do
-/// usuário: as trilhas não são uma tela própria — aparecem como seção
-/// dentro desta mesma tela. Ver `.claude/memory/decisions.md`.
+/// — hoje Trilha 1 (Mundos 1-2), Trilha 2 (Mundos 3-4) e Trilha 3
+/// (Mundos 5-7) —, cada uma com o mapa em zigue-zague (`ZigzagMap`) dos
+/// seus mundos logo abaixo do card. Pedido explícito do usuário: as
+/// trilhas não são uma tela própria — aparecem como seção dentro desta
+/// mesma tela. Ver `.claude/memory/decisions.md`.
 ///
 /// Na 1ª vez que o jogador toca um mundo jogável, empurra a `TutorialView`
 /// — incluindo os slides gerais de "o que é programar" se ele ainda não os
@@ -78,7 +78,12 @@ class WorldSelectView extends ConsumerWidget {
   int _worldUnlockPointsThreshold(GameWorld world) => (world.levels.length * maxLevelPoints * 0.6).round();
 
   /// Cada `WorldGameType` tem sua própria tela de Seleção de Fases (motor
-  /// diferente, ver `.claude/plans/Mundos.md`) — decide qual empilhar.
+  /// diferente, ver `.claude/plans/Mundos.md`) — decide qual empilhar. Os
+  /// Mundos 1 ("Primeiros passos"), 2 ("Resgate de Personagens") e 3
+  /// ("Desenho no Tabuleiro") são todos `WorldGameType.maze` — compartilham a mesma
+  /// `StageSelectView`/`GameplayView` (Mundo 1), diferenciados só pelo
+  /// conteúdo de cada fase. Ver `.claude/memory/decisions.md`, entrada de
+  /// 2026-09-18.
   void _openWorld(BuildContext context, GameWorld world) {
     switch (world.gameType) {
       case WorldGameType.maze:
@@ -87,10 +92,10 @@ class WorldSelectView extends ConsumerWidget {
           builder: (_) => StageSelectView(world: world),
         ));
         break;
-      case WorldGameType.conveyor:
+      case WorldGameType.blockProgram:
         Navigator.of(context).push(MaterialPageRoute(
-          settings: const RouteSettings(name: conveyorLevelSelectRouteName),
-          builder: (_) => ConveyorStageSelectView(world: world),
+          settings: const RouteSettings(name: blockProgramLevelSelectRouteName),
+          builder: (_) => BlockProgramStageSelectView(world: world),
         ));
         break;
       case WorldGameType.predictOutput:

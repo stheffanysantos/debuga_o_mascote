@@ -3,12 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:debuga_o_mascote/core/auth/auth_providers.dart';
 import 'package:debuga_o_mascote/core/leaderboard/leaderboard_providers.dart';
+import 'package:debuga_o_mascote/features/block_program/presentation/gameplay/block_program_gameplay_view.dart';
+import 'package:debuga_o_mascote/features/block_program/presentation/stage_select/stage_select_view.dart';
 import 'package:debuga_o_mascote/features/code_puzzle/presentation/gameplay/code_puzzle_gameplay_view.dart';
 import 'package:debuga_o_mascote/features/code_puzzle/presentation/stage_select/stage_select_view.dart';
 import 'package:debuga_o_mascote/features/complete_code/presentation/gameplay/complete_code_gameplay_view.dart';
 import 'package:debuga_o_mascote/features/complete_code/presentation/stage_select/stage_select_view.dart';
-import 'package:debuga_o_mascote/features/conveyor/presentation/gameplay/conveyor_gameplay_view.dart';
-import 'package:debuga_o_mascote/features/conveyor/presentation/stage_select/stage_select_view.dart';
 import 'package:debuga_o_mascote/features/maze/presentation/gameplay/gameplay_view.dart';
 import 'package:debuga_o_mascote/features/maze/presentation/stage_select/stage_select_view.dart';
 import 'package:debuga_o_mascote/features/predict_output/presentation/gameplay/predict_output_gameplay_view.dart';
@@ -16,9 +16,9 @@ import 'package:debuga_o_mascote/features/predict_output/presentation/stage_sele
 import 'package:debuga_o_mascote/features/result/presentation/code_puzzle_result_view.dart';
 import 'package:debuga_o_mascote/features/result/presentation/failure_view.dart';
 import 'package:debuga_o_mascote/features/result/presentation/victory_view.dart';
+import 'package:debuga_o_mascote/models/block_program_level.dart';
 import 'package:debuga_o_mascote/models/code_puzzle_level.dart';
 import 'package:debuga_o_mascote/models/complete_code_level.dart';
-import 'package:debuga_o_mascote/models/conveyor_level.dart';
 import 'package:debuga_o_mascote/models/level.dart';
 import 'package:debuga_o_mascote/models/predict_output_level.dart';
 import 'package:debuga_o_mascote/features/leaderboard/presentation/leaderboard_view.dart';
@@ -79,18 +79,22 @@ void main() {
       ],
       onBackToMenu: () {},
     ),
-    'Seleção de Fases (Esteira)': ConveyorStageSelectView(world: worlds[1]),
-    'Gameplay (Esteira)': ConveyorGameplayView(levelId: world2Levels.first.id),
-    'Seleção de Fases (Preveja a Saída)': PredictOutputStageSelectView(world: worlds[2]),
-    'Gameplay (Preveja a Saída)': PredictOutputGameplayView(levelId: world3Levels.first.id),
-    'Seleção de Fases (Complete o Código)': CompleteCodeStageSelectView(world: worlds[3]),
-    'Gameplay (Complete o Código)': CompleteCodeGameplayView(levelId: world4Levels.first.id),
-    'Seleção de Fases (Modo Debug)': CodePuzzleStageSelectView(world: worlds[4]),
-    'Gameplay (Modo Debug, reorder)': CodePuzzleGameplayView(levelId: world5Levels.first.id),
-    'Gameplay (Modo Debug, findBug)': CodePuzzleGameplayView(levelId: world5Levels.firstWhere((l) => l.type == CodePuzzleType.findBug).id),
+    'Seleção de Fases (Encruzilhada Colorida)': StageSelectView(world: worlds[1]),
+    'Gameplay (Encruzilhada Colorida)': GameplayView(levelId: world2Levels.first.id),
+    'Seleção de Fases (Caça-Moedas)': StageSelectView(world: worlds[2]),
+    'Gameplay (Caça-Moedas)': GameplayView(levelId: world3Levels.first.id),
+    'Seleção de Fases (Decisões em Bloco)': BlockProgramStageSelectView(world: worlds[3]),
+    'Gameplay (Decisões em Bloco)': BlockProgramGameplayView(levelId: world4Levels.first.id),
+    'Seleção de Fases (Preveja a Saída)': PredictOutputStageSelectView(world: worlds[4]),
+    'Gameplay (Preveja a Saída)': PredictOutputGameplayView(levelId: world5Levels.first.id),
+    'Seleção de Fases (Complete o Código)': CompleteCodeStageSelectView(world: worlds[5]),
+    'Gameplay (Complete o Código)': CompleteCodeGameplayView(levelId: world6Levels.first.id),
+    'Seleção de Fases (Modo Debug)': CodePuzzleStageSelectView(world: worlds[6]),
+    'Gameplay (Modo Debug, reorder)': CodePuzzleGameplayView(levelId: world7Levels.first.id),
+    'Gameplay (Modo Debug, findBug)': CodePuzzleGameplayView(levelId: world7Levels.firstWhere((l) => l.type == CodePuzzleType.findBug).id),
     'Resultado (veredito único, vitória)': CodePuzzleResultView(
       won: true,
-      levelNumber: world5Levels.first.number,
+      levelNumber: world7Levels.first.number,
       attempts: 1,
       stars: 3,
       points: 1000,
@@ -100,12 +104,12 @@ void main() {
     ),
     'Resultado (veredito único, derrota)': CodePuzzleResultView(
       won: false,
-      levelNumber: world5Levels.first.number,
+      levelNumber: world7Levels.first.number,
       attempts: 1,
       stars: 0,
       points: 0,
       correctOrderChips: [
-        for (final line in world5Levels.first.correctOrder)
+        for (final line in world7Levels.first.correctOrder)
           ProgramBlockChip(label: line.text, background: AppColors.lilac, foreground: AppColors.purpleDark),
       ],
       hasNext: false,
@@ -141,11 +145,11 @@ void main() {
 
   // `Splash` acima só pumpa 500ms — tempo insuficiente pra `_stageTimer`
   // (3s) trocar o palco central sequer uma vez, então aquele teste sozinho
-  // só cobre o slide inicial (Mascote). Varre os 6 slides de verdade
-  // (Mascote + 5 ícones de Mundo — `_stageCount` em `splash_view.dart`; o
+  // só cobre o slide inicial (Mascote). Varre os 7 slides de verdade
+  // (Mascote + 7 ícones de Mundo — `_stageCount` em `splash_view.dart`; o
   // título não faz mais parte do revezamento, ver `.claude/memory/decisions.md`)
   // em cada tamanho de tela, avançando o relógio falso do teste em vez de
-  // esperar tempo real. Mesmo cuidado já aplicado às 12 fases do Mundo 5 e
+  // esperar tempo real. Mesmo cuidado já aplicado às 12 fases do Mundo 7 e
   // aos slides do Tutorial — sem isso, um estouro só no slide de um ícone
   // específico passaria despercebido.
   for (final sizeEntry in sizes.entries) {
@@ -160,7 +164,7 @@ void main() {
       await tester.pumpWidget(wrapForTest(container, const SplashView()));
       await tester.pump();
 
-      for (var i = 0; i < 6; i++) {
+      for (var i = 0; i < 7; i++) {
         await tester.pump(const Duration(seconds: 3));
         await tester.pump(const Duration(milliseconds: 600)); // transição do fade
         expect(tester.takeException(), isNull, reason: 'slide $i');
@@ -198,16 +202,59 @@ void main() {
   }
 
   // `Gameplay (Modo Debug, reorder/findBug)` acima só testa 2 das 12 fases
-  // de `world5Levels` (a mais curta de cada tipo) — o Code Reviewer achou
+  // de `world7Levels` (a mais curta de cada tipo) — o Code Reviewer achou
   // (rodando um teste temporário) que 4 fases com linhas de código mais
   // longas ("for (int i = 0; i < 3; i++) {", "List<int> numeros = [1, 2, 3];"
   // etc.) estouravam `ProgramBlockChip` em celular, sem nenhum teste
   // cobrindo isso — corrigido em `lib/widgets/program_block_chip_widget.dart`.
-  // Varre as 12 fases de verdade para não repetir esse ponto cego — mesmo
-  // cuidado replicado para os Mundos 3/4 (novos), que também mostram
-  // código de tamanho variável.
+  // Varre as 12 fases de verdade para não repetir esse ponto cego. Os
+  // Mundos 2/3 ("Encruzilhada Colorida"/"Caça-Moedas", `maze`) e o Mundo 4
+  // ("Decisões em Bloco", `blockProgram`) ganham a mesma varredura logo
+  // abaixo.
   for (final sizeEntry in sizes.entries) {
-    for (final level in world5Levels) {
+    for (final level in world2Levels) {
+      testWidgets('Gameplay (Encruzilhada Colorida) ${level.id} não estoura em ${sizeEntry.key}', (tester) async {
+        final container = createTestContainer();
+        await tester.binding.setSurfaceSize(sizeEntry.value);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(wrapForTest(container, GameplayView(levelId: level.id)));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    for (final level in world3Levels) {
+      testWidgets('Gameplay (Caça-Moedas) ${level.id} não estoura em ${sizeEntry.key}', (tester) async {
+        final container = createTestContainer();
+        await tester.binding.setSurfaceSize(sizeEntry.value);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(wrapForTest(container, GameplayView(levelId: level.id)));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    for (final level in world4Levels) {
+      testWidgets('Gameplay (Decisões em Bloco) ${level.id} não estoura em ${sizeEntry.key}', (tester) async {
+        final container = createTestContainer();
+        await tester.binding.setSurfaceSize(sizeEntry.value);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(wrapForTest(container, BlockProgramGameplayView(levelId: level.id)));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    for (final level in world7Levels) {
       testWidgets('Gameplay (Modo Debug) ${level.id} não estoura em ${sizeEntry.key}', (tester) async {
         final container = createTestContainer();
         await tester.binding.setSurfaceSize(sizeEntry.value);
@@ -221,7 +268,7 @@ void main() {
       });
     }
 
-    for (final level in world3Levels) {
+    for (final level in world5Levels) {
       testWidgets('Gameplay (Preveja a Saída) ${level.id} não estoura em ${sizeEntry.key}', (tester) async {
         final container = createTestContainer();
         await tester.binding.setSurfaceSize(sizeEntry.value);
@@ -235,7 +282,7 @@ void main() {
       });
     }
 
-    for (final level in world4Levels) {
+    for (final level in world6Levels) {
       testWidgets('Gameplay (Complete o Código) ${level.id} não estoura em ${sizeEntry.key}', (tester) async {
         final container = createTestContainer();
         await tester.binding.setSurfaceSize(sizeEntry.value);

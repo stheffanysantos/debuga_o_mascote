@@ -9,17 +9,17 @@ import '../../helpers/test_container.dart';
 
 /// Mesmo espírito de `test/features/maze/gameplay_flow_test.dart`/
 /// `test/features/conveyor/conveyor_flow_test.dart`, mas para o motor de
-/// veredito único do Mundo 5 (`CodePuzzleGameplayView` →
+/// veredito único do Mundo 7 (`CodePuzzleGameplayView` →
 /// `CodePuzzleResultView`, sem passo a passo, ver
 /// `.claude/rules/testing.md`).
 void main() {
-  // Fase 1 do Mundo 5 ('world5_level1', reorder): duas linhas,
+  // Fase 1 do Mundo 7 ('world7_level1', reorder): duas linhas,
   // `int x = 5;` seguida de `print(x);`.
-  final reorderLevel = world5Levels.firstWhere((l) => l.id == 'world5_level1');
+  final reorderLevel = world7Levels.firstWhere((l) => l.id == 'world7_level1');
 
-  // Fase 7 do Mundo 5 ('world5_level7', findBug): a linha errada é o
+  // Fase 7 do Mundo 7 ('world7_level7', findBug): a linha errada é o
   // índice 1 (`return a - b;`, deveria somar).
-  final findBugLevel = world5Levels.firstWhere((l) => l.id == 'world5_level7');
+  final findBugLevel = world7Levels.firstWhere((l) => l.id == 'world7_level7');
 
   Finder onResult(Finder finder) => find.descendant(of: find.byType(CodePuzzleResultView), matching: finder);
 
@@ -47,7 +47,7 @@ void main() {
     'Fase 2 (linhas intercambiáveis) aceita a ordem alternativa das declarações independentes '
     '(regressão: "int a"/"int b" podiam vir em qualquer ordem entre si, mas só uma era aceita)',
     (tester) async {
-      final level2 = world5Levels.firstWhere((l) => l.id == 'world5_level2');
+      final level2 = world7Levels.firstWhere((l) => l.id == 'world7_level2');
       await tester.pumpWidget(wrapForTest(createTestContainer(), CodePuzzleGameplayView(levelId: level2.id)));
       await tester.pump();
 

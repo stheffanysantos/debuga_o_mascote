@@ -4,10 +4,10 @@ import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 
 /// Uma linha/opção tocável com destaque de seleção — extraído de
-/// `CodePuzzleGameplayScreen` (Mundo 5, "toque na linha com o erro") para
+/// `CodePuzzleGameplayScreen` (Mundo 7, "toque na linha com o erro") para
 /// ser reaproveitado por qualquer tela de veredito único que peça "toque
-/// para escolher uma opção": hoje também Mundo 3 ("Preveja a Saída", opções
-/// de resposta em texto) e Mundo 4 ("Complete o Código", linhas de código
+/// para escolher uma opção": hoje também Mundo 5 ("Preveja a Saída", opções
+/// de resposta em texto) e Mundo 6 ("Complete o Código", linhas de código
 /// candidatas). O conteúdo (`child`) fica a cargo de quem chama — pode ser
 /// um `Text` simples ou um `RichText` com destaque de sintaxe
 /// (`highlightCodeLine`, `lib/widgets/code_syntax_highlight.dart`).
@@ -16,8 +16,8 @@ import '../theme/app_text.dart';
 /// usuário: sem nenhum fundo, as opções pareciam texto solto, sem affordance
 /// de toque, num mundo de múltipla escolha. `label` (opcional, ex.: `'a)'`)
 /// prefixa o conteúdo para reforçar "isto é uma lista de alternativas" —
-/// usado hoje só pelo Mundo 3 (Preveja a Saída), onde as opções são texto
-/// livre e não código; Mundo 4/5 continuam sem letra (as opções ali já são
+/// usado hoje só pelo Mundo 5 (Preveja a Saída), onde as opções são texto
+/// livre e não código; Mundo 6/7 continuam sem letra (as opções ali já são
 /// visualmente linhas de código, uma letra ao lado confundiria mais que
 /// ajudaria).
 class SelectableLineTile extends StatelessWidget {

@@ -106,17 +106,27 @@ flutter:
     - assets/images/world3_icon.png
     - assets/images/world4_icon.png
     - assets/images/world5_icon.png
-    # Ícones ilustrados dos 5 mundos (Seleção de Mundo). Mundos 1/2/5 gerados
-    # por IA a partir de prompt do usuário; Mundos 3/4 (novos) são
-    # placeholders geométricos simples (mesmo espírito do mascote
-    # placeholder original) até uma arte ilustrada de verdade ser gerada —
-    # ver .claude/memory/decisions.md.
+    - assets/images/world6_icon.png
+    - assets/images/world7_icon.png
+    # Ícones ilustrados dos 7 mundos (Seleção de Mundo). Mundos 1/2/5/6/7
+    # gerados por IA a partir de prompt do usuário (5/6/7 renumerados dos
+    # antigos Mundos 3/4/5); Mundos 3/4 (novos, "Oficina de Blocos"/
+    # "Decisões em Bloco") são placeholders geométricos simples (mesmo
+    # espírito do mascote placeholder original) até uma arte ilustrada de
+    # verdade ser gerada — ver .claude/memory/decisions.md.
     - assets/images/leaderboard_bee.png
     # Personagem abelha (amarelo/roxo, gerado por IA) usado na tela do
     # Placar do Dia — ver .claude/memory/decisions.md.
     - assets/images/mascot_tutorial.png
     # Mascote de olhos abertos, usado só na TutorialScreen — gerado por IA,
     # ver .claude/memory/decisions.md.
+    - assets/images/avatar_lili.png
+    - assets/images/avatar_bit.png
+    - assets/images/avatar_chip.png
+    - assets/images/avatar_loopy.png
+    # Rostinho da Lili (closeup, substitui assets/images/mascot.png como
+    # avatar de perfil) + 3 personagens novos (Bit, Chip, Loopy), gerados
+    # por IA a partir de prompt do usuário — ver .claude/memory/decisions.md.
     - assets/audio/tutorial/
     # Narração gravada por slide do tutorial (TutorialScreen) — gerada por
     # tool/generate_tutorial_narration.py, ver .claude/memory/decisions.md.

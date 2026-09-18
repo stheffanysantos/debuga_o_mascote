@@ -7,6 +7,7 @@ import '../../../../core/auth/auth_providers.dart';
 import '../../../../core/onboarding/onboarding_notifier.dart';
 import '../../../../game/game_result.dart';
 import '../../../../models/block.dart';
+import '../../../../models/character_avatar.dart';
 import '../../../../models/game_track.dart';
 import '../../../../models/level.dart';
 import '../../../auth/presentation/register/register_view.dart';
@@ -15,14 +16,17 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_icons.dart';
 import '../../../../theme/app_text.dart';
 import '../../../../widgets/block_chip_style.dart';
+import '../../../../widgets/character_avatar_widget.dart';
 import '../../../../widgets/command_button_grid_widget.dart';
 import '../../../../widgets/command_button_widget.dart';
+import '../../../../widgets/code_syntax_highlight.dart';
 import '../../../../widgets/direction_arrow_widget.dart';
 import '../../../../widgets/gameplay_header_widget.dart';
 import '../../../../widgets/mascot_image_widget.dart';
 import '../../../../widgets/primary_pill_button_widget.dart';
 import '../../../../widgets/program_block_chip_widget.dart';
 import '../../../../widgets/program_chip_grid_widget.dart';
+import '../../../../widgets/program_code_translator.dart';
 import '../../../../widgets/pulse_tap_widget.dart';
 import '../../../../widgets/tutorial_content.dart';
 import '../../../result/presentation/failure_view.dart';
@@ -31,20 +35,69 @@ import '../stage_select/stage_select_view.dart';
 import 'gameplay_state.dart';
 import 'gameplay_view_model.dart';
 
-/// Texto real do motivo da falha a partir do `GameOutcome` da Execução —
-/// só quem conhece o motor do Mundo 1 sabe interpretar um `GameOutcome`
-/// (`FailureView` é genérica entre motores). Ver `.claude/docs/GAME_DESIGN.md`.
-String _reasonTextFor(GameOutcome outcome) {
-  switch (outcome) {
+/// Texto real do motivo da falha a partir do `GameplayFailureData` da
+/// Execução — só quem conhece o motor de labirinto (Mundos 1/2/3) sabe
+/// interpretar um `GameOutcome` (`FailureView` é genérica entre motores).
+/// Ver `.claude/docs/GAME_DESIGN.md`.
+String _reasonTextFor(GameplayFailureData data) {
+  switch (data.outcome) {
     case GameOutcome.crash:
       return 'O mascote bateu na parede (ou saiu do tabuleiro) antes de chegar no alvo.';
     case GameOutcome.farFromGoal:
       return 'O programa terminou, mas o mascote não chegou no alvo.';
+    case GameOutcome.wrongCollectCount:
+      // Só Mundo 2 ("Resgate de Personagens") — a posição final estava
+      // certa, mas a quantidade de personagens resgatados não bateu
+      // (achado do UX Reviewer: mostrar os números reais, não um texto
+      // genérico — mesmo padrão já usado em
+      // `block_program_gameplay_view.dart`).
+      return 'O mascote chegou no alvo, mas resgatou ${data.collectedCount} personagem(ns) — a fase pedia ${data.collectTarget}.';
+    case GameOutcome.wrongPaintPattern:
+      {
+        // Só Mundo 3 ("Desenho no Tabuleiro") — a posição final estava
+        // certa, mas o desenho pintado não bateu exatamente com o pedido.
+        // Mostra a diferença real (quantas células faltaram/sobraram),
+        // mesmo critério de "números reais, não texto genérico" já usado
+        // em `wrongCollectCount`/`block_program_gameplay_view.dart`.
+        final missing = data.missingPaintCount;
+        final extra = data.extraPaintCount;
+        if (missing > 0 && extra > 0) {
+          return 'O mascote chegou no alvo, mas faltou pintar $missing célula(s) do desenho e pintou $extra fora dele.';
+        }
+        if (missing > 0) {
+          return 'O mascote chegou no alvo, mas faltou pintar $missing célula(s) do desenho.';
+        }
+        if (extra > 0) {
+          return 'O mascote chegou no alvo, mas pintou $extra célula(s) fora do desenho.';
+        }
+        return 'O mascote chegou no alvo, mas o desenho não ficou igual ao pedido.';
+      }
     case GameOutcome.win:
       // Não deveria navegar para a Falha numa vitória — mantido só por
       // exaustividade do switch.
       return '';
   }
+}
+
+/// Personagens elegíveis para aparecer perdidos no tabuleiro do Mundo 2
+/// ("Resgate de Personagens") — todos exceto Lili (o próprio Mascote
+/// controlado pelo jogador; resgatar a si mesma não faria sentido).
+final _rescuableAvatars = characterAvatars.where((a) => a.id != defaultAvatarId).toList();
+
+/// Escolhe um personagem determinístico para cada célula com um personagem
+/// perdido (`Level.collectibles`) — cicla por `_rescuableAvatars` na ordem
+/// (y, depois x) das posições, para o mesmo conjunto de células sempre
+/// resultar na mesma escolha visual (a ordem de iteração de `Set` não é
+/// garantida, por isso a ordenação explícita). Decisão puramente cosmética
+/// de UI — o modelo (`Level.collectibles`) não sabe nem precisa saber qual
+/// personagem é qual. Ver `.claude/memory/decisions.md`, entrada de
+/// 2026-09-18.
+Map<GridPosition, String> _avatarIdsForCollectibles(Set<GridPosition> collectibles) {
+  final sorted = collectibles.toList()
+    ..sort((a, b) => a.y != b.y ? a.y.compareTo(b.y) : a.x.compareTo(b.x));
+  return {
+    for (var i = 0; i < sorted.length; i++) sorted[i]: _rescuableAvatars[i % _rescuableAvatars.length].id,
+  };
 }
 
 /// Volta pra Seleção de Fases — a menos que o Mundo que acabou de fechar
@@ -98,12 +151,13 @@ void _onVictoryPrimaryAction(BuildContext context, WidgetRef ref, GameplayVictor
   _returnToLevelSelect(context, ref, worldNumber: data.worldNumber, worldJustCompleted: data.worldJustCompleted);
 }
 
-/// Gameplay do Mundo 1 (labirinto) — View da vertical de referência da
-/// migração pra Riverpod/MVVM (ver
-/// `C:\Users\XProcess\.claude\plans\encapsulated-whistling-peach.md`). Só
-/// renderiza `GameplayState` e repassa toques pro `GameplayViewModel`
-/// (`gameplayViewModelProvider(levelId)`) — nenhuma lógica de jogo ou
-/// orquestração mora aqui.
+/// Gameplay do motor de labirinto — reaproveitada pelos Mundos 1 ("Primeiros
+/// passos"), 2 ("Resgate de Personagens") e 3 ("Desenho no Tabuleiro"), todos
+/// `WorldGameType.maze` (`Level`/`ProgramExecutor`), diferenciados só pelo
+/// conteúdo de cada fase — ver `.claude/memory/decisions.md`, entradas de
+/// 2026-09-18. Só renderiza `GameplayState` e repassa toques pro
+/// `GameplayViewModel` (`gameplayViewModelProvider(levelId)`) — nenhuma
+/// lógica de jogo ou orquestração mora aqui.
 class GameplayView extends ConsumerWidget {
   final String levelId;
 
@@ -151,7 +205,7 @@ class GameplayView extends ConsumerWidget {
           builder: (_) => FailureView(
             levelNumber: data.levelNumber,
             attempt: data.attempt,
-            reasonText: _reasonTextFor(data.outcome),
+            reasonText: _reasonTextFor(data),
             maxBlocks: data.maxBlocks,
             hintChips: hintChips,
             onBackToMenu: () => Navigator.of(context).popUntil((route) => route.settings.name == levelSelectRouteName),
@@ -192,8 +246,10 @@ class GameplayView extends ConsumerWidget {
         children: [
           _buildHeader(context, state),
           const SizedBox(height: 10),
+          _buildRescuePanel(state),
           _buildBoard(state, maxSize: 340),
           const SizedBox(height: 14),
+          _buildCodeTranslator(state),
           _buildProgramArea(context, ref, state),
         ],
       ),
@@ -212,7 +268,15 @@ class GameplayView extends ConsumerWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(flex: 5, child: _buildBoard(state, maxSize: 640)),
+              Expanded(
+                flex: 5,
+                child: Column(
+                  children: [
+                    _buildRescuePanel(state),
+                    Expanded(child: _buildBoard(state, maxSize: 640)),
+                  ],
+                ),
+              ),
               const SizedBox(width: 24),
               Expanded(
                 flex: 4,
@@ -233,7 +297,10 @@ class GameplayView extends ConsumerWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [_buildProgramArea(context, ref, state)],
+                          children: [
+                            _buildCodeTranslator(state),
+                            _buildProgramArea(context, ref, state),
+                          ],
                         ),
                       ),
                     );
@@ -244,6 +311,47 @@ class GameplayView extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  /// Painel "Resgatados: X / Y" — só Mundo 2 ("Resgate de Personagens",
+  /// `level.collectTarget != null`). Mesmo espírito visual dos cards
+  /// "TOTAL"/"ALVO" do Mundo 4 ("Decisões em Bloco") — o jogador sempre vê o
+  /// progresso sem precisar guardar de cabeça quantos personagens já
+  /// resgatou.
+  Widget _buildRescuePanel(GameplayState state) {
+    final target = state.level.collectTarget;
+    if (target == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(color: AppColors.purpleDark, borderRadius: BorderRadius.circular(14)),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.favorite, size: 18, color: AppColors.yellowNeon),
+            const SizedBox(width: 8),
+            // `Flexible`+`FittedBox` em vez de `Text` cru — em celulares
+            // estreitos (320px), "Resgatados: X / Y" em Nunito 900 não cabia
+            // nos ~226px restantes do Row (achado real, `RenderFlex
+            // overflowed by 50 pixels`), mesma técnica já usada em
+            // `gameplay_header_widget.dart`/`CommandButton` para encolher em
+            // vez de estourar.
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'Resgatados: ${state.cursor.collectedCount} / $target',
+                  maxLines: 1,
+                  style: AppText.style(size: 16, weight: FontWeight.w900, color: AppColors.yellowNeon),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -262,6 +370,7 @@ class GameplayView extends ConsumerWidget {
   /// a largura como antes).
   Widget _buildBoard(GameplayState state, {required double maxSize}) {
     final level = state.level;
+    final avatarIds = _avatarIdsForCollectibles(level.collectibles);
     return Center(
       child: LayoutBuilder(
         builder: (context, outerConstraints) {
@@ -293,7 +402,16 @@ class GameplayView extends ConsumerWidget {
                     itemBuilder: (context, index) {
                       final x = index % level.gridSize;
                       final y = index ~/ level.gridSize;
-                      return _BoardCell(isWall: level.isWall(x, y), isGoal: level.isGoal(x, y));
+                      final position = GridPosition(x, y);
+                      return _BoardCell(
+                        isWall: level.isWall(x, y),
+                        isGoal: level.isGoal(x, y),
+                        hasCollectible: level.collectibles.contains(position),
+                        collected: state.cursor.collectedTiles.contains(position),
+                        avatarId: avatarIds[position],
+                        isPaintTarget: level.isPaintTarget(x, y),
+                        isPainted: state.cursor.paintedTiles.contains(position),
+                      );
                     },
                   ),
                   AnimatedPositioned(
@@ -310,6 +428,56 @@ class GameplayView extends ConsumerWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  /// Painel "TRADUTOR DE BLOCOS" — mostra o Programa montado como
+  /// pseudo-código Dart-like (`programCodeLinesFor`), atualizando ao vivo a
+  /// cada bloco adicionado/removido. Aparece nos 3 mundos deste motor
+  /// (Mundos 1, 2 e 3) — a mesma "porta de entrada" visual para código que
+  /// o Mundo 4 já tem (`codeLinesFor`/`block_program_chip_style.dart`), sem
+  /// duplicar a regra de pareamento de `Repetir` (`resolveProgramEntries`,
+  /// ver `.claude/docs/GAME_DESIGN.md`). Altura limitada com scroll próprio
+  /// — Programas grandes (até 8 blocos, alguns virando 3 linhas com
+  /// `Repetir`) não empurram o resto do layout pra baixo.
+  Widget _buildCodeTranslator(GameplayState state) {
+    final lines = programCodeLinesFor(state.program);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Container(
+        key: const Key('mazeCodeTranslator'),
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: AppColors.purpleDark, borderRadius: BorderRadius.circular(18)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('TRADUTOR DE BLOCOS', style: AppText.eyebrow(size: 11)),
+            const SizedBox(height: 8),
+            if (lines.isEmpty)
+              Text(
+                '// monte um Programa para ver o código aqui',
+                style: AppText.style(size: 14, weight: FontWeight.w800, color: AppColors.grayLockIcon),
+              )
+            else
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 160),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final line in lines)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: RichText(text: TextSpan(children: highlightCodeLine(line))),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -351,44 +519,7 @@ class GameplayView extends ConsumerWidget {
                 ),
         ),
         const SizedBox(height: 14),
-        CommandButtonGrid(
-          crossAxisCount: 4,
-          maxCellHeight: 100,
-          buttons: [
-            CommandButton(
-              iconBuilder: (size) => AppIcons.walk(size: size, color: AppColors.purpleDark),
-              label: 'Andar',
-              background: AppColors.lilac,
-              foreground: AppColors.purpleDark,
-              shadowColor: AppColors.lilacShadow,
-              onTap: () => notifier.addBlock(BlockType.walk),
-            ),
-            CommandButton(
-              iconBuilder: (size) => AppIcons.turnLeft(size: size, color: AppColors.white),
-              label: 'Virar ←',
-              background: AppColors.purple,
-              foreground: AppColors.white,
-              shadowColor: AppColors.purpleShadow,
-              onTap: () => notifier.addBlock(BlockType.turnLeft),
-            ),
-            CommandButton(
-              iconBuilder: (size) => AppIcons.turnRight(size: size, color: AppColors.white),
-              label: 'Virar →',
-              background: AppColors.purple,
-              foreground: AppColors.white,
-              shadowColor: AppColors.purpleShadow,
-              onTap: () => notifier.addBlock(BlockType.turnRight),
-            ),
-            CommandButton(
-              iconBuilder: (size) => AppIcons.repeat(size: size, color: AppColors.purpleDark),
-              label: 'Repetir 3×',
-              background: AppColors.yellowNeon,
-              foreground: AppColors.purpleDark,
-              shadowColor: AppColors.yellowShadow,
-              onTap: () => notifier.addBlock(BlockType.repeat),
-            ),
-          ],
-        ),
+        _buildCommandGrid(state, notifier),
         const SizedBox(height: 10),
         PrimaryPillButton(
           label: state.running ? 'Executando…' : 'PLAY',
@@ -402,6 +533,40 @@ class GameplayView extends ConsumerWidget {
     );
   }
 
+  /// Paleta de comandos derivada de `availableBlockTypesForWorld` — Mundos 1
+  /// ("Primeiros passos") e 3 ("Desenho no Tabuleiro") continuam com os
+  /// mesmos 4 comandos básicos; Mundo 2 ("Resgate de Personagens") ganha o
+  /// bloco condicional de resgate (`rescueIfCharacterHere`), 5 no total. 3
+  /// colunas quando há mais de 4 comandos para caberem 2 linhas sem
+  /// espremer — mesmo critério já usado por outros motores com 5-6
+  /// comandos.
+  Widget _buildCommandGrid(GameplayState state, GameplayViewModel notifier) {
+    final availableTypes = availableBlockTypesForWorld(state.level.world);
+    return CommandButtonGrid(
+      crossAxisCount: availableTypes.length > 4 ? 3 : 4,
+      maxCellHeight: 100,
+      buttons: [
+        for (final type in availableTypes) _commandButtonFor(type, notifier),
+      ],
+    );
+  }
+
+  CommandButton _commandButtonFor(BlockType type, GameplayViewModel notifier) {
+    final style = styleForBlock(Block(type));
+    return CommandButton(
+      iconBuilder: style.icon,
+      // "Repetir" precisa continuar aparecendo como "Repetir 3×" no botão
+      // (diferente do chip de "Seu Programa", que mostra o "3×" num badge
+      // separado) — mesmo texto que os testes de fluxo já procuram.
+      label: style.repeatCount != null ? '${style.label} ${style.repeatCount}×' : style.label,
+      background: style.background,
+      foreground: style.foreground,
+      shadowColor: style.shadowColor,
+      border: style.border,
+      onTap: () => notifier.addBlock(type),
+    );
+  }
+
   Widget _blockChip(GameplayState state, GameplayViewModel notifier, int index) {
     final style = styleForBlock(state.program[index]);
     return ProgramBlockChip(
@@ -410,6 +575,7 @@ class GameplayView extends ConsumerWidget {
       foreground: style.foreground,
       repeatCount: style.repeatCount,
       badgeText: style.badgeText,
+      border: style.border,
       highlighted: state.currentStepBlockIndex == index,
       onTap: () => notifier.removeBlockAt(index),
       // "Seu Programa" mostra só o ícone (rótulo continua nos
@@ -425,7 +591,36 @@ class _BoardCell extends StatelessWidget {
   final bool isWall;
   final bool isGoal;
 
-  const _BoardCell({required this.isWall, required this.isGoal});
+  /// `true` quando esta célula tem um personagem perdido — só Mundo 2
+  /// ("Resgate de Personagens"), ver `Level.collectibles`.
+  final bool hasCollectible;
+
+  /// `true` quando o mascote já resgatou o personagem desta célula nesta
+  /// Execução (via `rescueIfCharacterHere`) — dispara a animação de "poof"
+  /// (fade + encolher) em vez de o personagem simplesmente desaparecer.
+  final bool collected;
+
+  /// Qual personagem desenhar nesta célula (`CharacterAvatar.id`) — só
+  /// relevante quando `hasCollectible` é `true`.
+  final String? avatarId;
+
+  /// `true` quando esta célula faz parte do desenho-alvo — só Mundo 3
+  /// ("Desenho no Tabuleiro"), ver `Level.paintTarget`.
+  final bool isPaintTarget;
+
+  /// `true` quando o mascote já pintou esta célula nesta Execução
+  /// (`GameCursor.paintedTiles`).
+  final bool isPainted;
+
+  const _BoardCell({
+    required this.isWall,
+    required this.isGoal,
+    this.hasCollectible = false,
+    this.collected = false,
+    this.avatarId,
+    this.isPaintTarget = false,
+    this.isPainted = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -455,7 +650,79 @@ class _BoardCell extends StatelessWidget {
         ),
       );
     }
-    return Container(decoration: BoxDecoration(color: AppColors.grayCellFree, borderRadius: BorderRadius.circular(8)));
+    return Container(
+      decoration: BoxDecoration(color: AppColors.grayCellFree, borderRadius: BorderRadius.circular(8)),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          if (isPaintTarget) Positioned.fill(child: _PaintMarker(painted: isPainted)),
+          if (hasCollectible) _CharacterMarker(avatarId: avatarId ?? defaultAvatarId, rescued: collected),
+        ],
+      ),
+    );
+  }
+}
+
+/// Indicador visual do desenho-alvo (Mundo 3, "Desenho no Tabuleiro") —
+/// preenchimento sutil enquanto a célula ainda não foi pintada
+/// (`painted: false`), que fica mais forte/sólido quando o mascote já
+/// passou por aqui nesta Execução (`painted: true`). Cor `lilac` — não
+/// compete com o Alvo (`yellowNeon` pulsante) nem com o contorno do
+/// Mascote (também `lilac`, mas sem preencher a célula).
+class _PaintMarker extends StatelessWidget {
+  final bool painted;
+
+  const _PaintMarker({required this.painted});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      decoration: BoxDecoration(
+        color: AppColors.lilac.withValues(alpha: painted ? 0.7 : 0.18),
+        borderRadius: BorderRadius.circular(8),
+        border: painted ? null : Border.all(color: AppColors.lilac.withValues(alpha: 0.6), width: 2),
+      ),
+    );
+  }
+}
+
+/// Indicador visual de um personagem perdido (Mundo 2, "Resgate de
+/// Personagens") — desaparece com um "poof" (encolher + esmaecer, ~260ms)
+/// quando `rescueIfCharacterHere` resgata de verdade, em vez de só sumir de
+/// repente. `avatarId` cicla entre os personagens do jogo (exceto Lili, o
+/// próprio Mascote) — ver `_avatarIdsForCollectibles`.
+class _CharacterMarker extends StatelessWidget {
+  final String avatarId;
+  final bool rescued;
+
+  const _CharacterMarker({required this.avatarId, required this.rescued});
+
+  static const _poofDuration = Duration(milliseconds: 260);
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedScale(
+      scale: rescued ? 0 : 1,
+      duration: _poofDuration,
+      curve: Curves.easeOut,
+      child: AnimatedOpacity(
+        opacity: rescued ? 0 : 1,
+        duration: _poofDuration,
+        child: FractionallySizedBox(
+          widthFactor: 0.72,
+          heightFactor: 0.72,
+          child: LayoutBuilder(
+            builder: (context, constraints) => CharacterAvatarCircle(
+              avatarId: avatarId,
+              size: constraints.biggest.shortestSide,
+              ringColor: AppColors.purpleDark,
+              ringWidth: 2,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

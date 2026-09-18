@@ -63,17 +63,35 @@ class GameplayVictoryData {
   });
 }
 
-/// Dados prontos pra montar a `FailureView`.
+/// Dados prontos pra montar a `FailureView`. `collectedCount`/
+/// `collectTarget` só têm valor real em `GameOutcome.wrongCollectCount`
+/// (Mundo 2, "Resgate de Personagens"); `missingPaintCount`/
+/// `extraPaintCount` só em `GameOutcome.wrongPaintPattern` (Mundo 3,
+/// "Desenho no Tabuleiro") — nos outros mundos/motivos ficam em `0`/`null`
+/// e não são usados pelo texto do motivo (ver `_reasonTextFor`).
 class GameplayFailureData {
   final int levelNumber;
   final int attempt;
   final GameOutcome outcome;
   final int maxBlocks;
+  final int collectedCount;
+  final int? collectTarget;
+
+  /// Quantas células do desenho-alvo (`Level.paintTarget`) ainda faltavam
+  /// ser pintadas quando o mascote chegou no alvo.
+  final int missingPaintCount;
+
+  /// Quantas células pintadas ficaram fora do desenho-alvo.
+  final int extraPaintCount;
 
   const GameplayFailureData({
     required this.levelNumber,
     required this.attempt,
     required this.outcome,
     required this.maxBlocks,
+    this.collectedCount = 0,
+    this.collectTarget,
+    this.missingPaintCount = 0,
+    this.extraPaintCount = 0,
   });
 }

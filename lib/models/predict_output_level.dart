@@ -1,10 +1,10 @@
 import 'code_line.dart';
 import 'game_level.dart';
 
-/// Uma fase do Mundo 3 ("Preveja a Saída"): o jogador lê um trecho de código
+/// Uma fase do Mundo 5 ("Preveja a Saída"): o jogador lê um trecho de código
 /// real (curto, já na ordem certa — sem embaralhar/editar) e prevê o
 /// resultado por múltipla escolha. Ver `.claude/docs/GAME_DESIGN.md`, seção
-/// "Mundo 3 — Preveja a Saída". Mesma família de "veredito único" do Mundo 5
+/// "Mundo 5 — Preveja a Saída". Mesma família de "veredito único" do Mundo 7
 /// ("Modo Debug") — sem "quase certo" — mas mais simples: só leitura, sem
 /// reordenar/editar nada.
 class PredictOutputLevel implements GameLevel {
@@ -21,7 +21,7 @@ class PredictOutputLevel implements GameLevel {
   final String title;
 
   /// O trecho de código, já na ordem certa — mostrado só para leitura
-  /// (nunca embaralhado/editável, diferente do `reorder` do Mundo 5).
+  /// (nunca embaralhado/editável, diferente do `reorder` do Mundo 7).
   final List<CodeLine> code;
 
   /// A pergunta mostrada abaixo do código (ex.: "O que aparece na tela?").
@@ -34,7 +34,7 @@ class PredictOutputLevel implements GameLevel {
   final int correctOptionIndex;
 
   /// Frase curta explicando o resultado — mostrada sempre (ganhou ou
-  /// perdeu), mesmo papel de `CodePuzzleLevel.bugExplanation` no Mundo 5.
+  /// perdeu), mesmo papel de `CodePuzzleLevel.bugExplanation` no Mundo 7.
   final String explanation;
 
   const PredictOutputLevel({
@@ -50,17 +50,18 @@ class PredictOutputLevel implements GameLevel {
   });
 }
 
-/// As 12 fases do Mundo 3 ("Preveja a Saída"): começa com leitura direta de
+/// As 12 fases do Mundo 5 ("Preveja a Saída"): começa com leitura direta de
 /// variáveis/expressões, passa por `if`/`else`, chega em laços (`for`/
 /// `while`) e fecha combinando laço + condicional. Progressão pensada como
-/// ponte entre o Mundo 2 (Esteira, sem código de verdade) e a Trilha 2
-/// (código de verdade manipulável) — o jogador já precisa "rodar o código
-/// na cabeça", mas nunca precisa editar nada. Dados consistentes verificados
-/// em `test/game/predict_output_catalog_test.dart`.
-final world3Levels = <PredictOutputLevel>[
+/// primeiro passo da Trilha 3 ("Modo Programador") — depois da Trilha 2
+/// ("Construtores de Lógica", programação em blocos sem sintaxe) — o
+/// jogador já precisa "rodar o código na cabeça", mas nunca precisa editar
+/// nada. Dados consistentes verificados em
+/// `test/game/predict_output_catalog_test.dart`.
+final world5Levels = <PredictOutputLevel>[
   PredictOutputLevel(
-    id: 'world3_level1',
-    world: 3,
+    id: 'world5_level1',
+    world: 5,
     number: 1,
     title: 'Primeira leitura',
     code: const [
@@ -73,8 +74,8 @@ final world3Levels = <PredictOutputLevel>[
     explanation: 'x vale 4; x + 1 é 5.',
   ),
   PredictOutputLevel(
-    id: 'world3_level2',
-    world: 3,
+    id: 'world5_level2',
+    world: 5,
     number: 2,
     title: 'Duas variáveis',
     code: const [
@@ -88,8 +89,8 @@ final world3Levels = <PredictOutputLevel>[
     explanation: 'a + b = 2 + 5 = 7.',
   ),
   PredictOutputLevel(
-    id: 'world3_level3',
-    world: 3,
+    id: 'world5_level3',
+    world: 5,
     number: 3,
     title: 'Comparação simples',
     code: const [
@@ -102,8 +103,8 @@ final world3Levels = <PredictOutputLevel>[
     explanation: '15 não é maior ou igual a 18 — a comparação é false.',
   ),
   PredictOutputLevel(
-    id: 'world3_level4',
-    world: 3,
+    id: 'world5_level4',
+    world: 5,
     number: 4,
     title: 'Se, então',
     code: const [
@@ -120,8 +121,8 @@ final world3Levels = <PredictOutputLevel>[
     explanation: 'nota (8) é maior ou igual a 6 — entra no if.',
   ),
   PredictOutputLevel(
-    id: 'world3_level5',
-    world: 3,
+    id: 'world5_level5',
+    world: 5,
     number: 5,
     title: 'Um laço fixo',
     code: const [
@@ -135,8 +136,8 @@ final world3Levels = <PredictOutputLevel>[
     explanation: 'O laço roda com i = 0, 1, 2 (para quando i deixa de ser menor que 3) — 3 vezes.',
   ),
   PredictOutputLevel(
-    id: 'world3_level6',
-    world: 3,
+    id: 'world5_level6',
+    world: 5,
     number: 6,
     title: 'Somando no laço',
     code: const [
@@ -152,8 +153,8 @@ final world3Levels = <PredictOutputLevel>[
     explanation: '1 + 2 + 3 = 6.',
   ),
   PredictOutputLevel(
-    id: 'world3_level7',
-    world: 3,
+    id: 'world5_level7',
+    world: 5,
     number: 7,
     title: 'Enquanto (while)',
     code: const [
@@ -169,8 +170,8 @@ final world3Levels = <PredictOutputLevel>[
     explanation: 'O laço soma 1 até c deixar de ser menor que 4 — para com c = 4.',
   ),
   PredictOutputLevel(
-    id: 'world3_level8',
-    world: 3,
+    id: 'world5_level8',
+    world: 5,
     number: 8,
     title: 'Duas condições',
     code: const [
@@ -189,8 +190,8 @@ final world3Levels = <PredictOutputLevel>[
     explanation: 'nota (5) não é maior ou igual a 7, mas é maior ou igual a 5 — cai no "else if".',
   ),
   PredictOutputLevel(
-    id: 'world3_level9',
-    world: 3,
+    id: 'world5_level9',
+    world: 5,
     number: 9,
     title: 'Contagem condicional',
     code: const [
@@ -208,8 +209,8 @@ final world3Levels = <PredictOutputLevel>[
     explanation: '2 e 4 são pares — total = 2.',
   ),
   PredictOutputLevel(
-    id: 'world3_level10',
-    world: 3,
+    id: 'world5_level10',
+    world: 5,
     number: 10,
     title: 'Função com retorno',
     code: const [
@@ -224,8 +225,8 @@ final world3Levels = <PredictOutputLevel>[
     explanation: 'dobro(4) devolve 4 * 2 = 8.',
   ),
   PredictOutputLevel(
-    id: 'world3_level11',
-    world: 3,
+    id: 'world5_level11',
+    world: 5,
     number: 11,
     title: 'Lista e soma',
     code: const [
@@ -242,8 +243,8 @@ final world3Levels = <PredictOutputLevel>[
     explanation: '2 + 4 + 6 = 12.',
   ),
   PredictOutputLevel(
-    id: 'world3_level12',
-    world: 3,
+    id: 'world5_level12',
+    world: 5,
     number: 12,
     title: 'Tudo junto',
     code: const [

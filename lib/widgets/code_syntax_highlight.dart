@@ -6,8 +6,8 @@ import '../theme/app_text.dart';
 /// Destaque de sintaxe simples: só 2 cores fixas de `AppColors` — sem
 /// pacote novo, sem parser real, um regex de palavras-chave já basta (ver
 /// `.claude/docs/GAME_DESIGN.md`). Extraído de `CodePuzzleGameplayScreen`
-/// (Mundo 5) para ser reaproveitado por qualquer tela que mostre uma
-/// `CodeLine` — hoje também Mundo 3 ("Preveja a Saída") e Mundo 4
+/// (Mundo 7) para ser reaproveitado por qualquer tela que mostre uma
+/// `CodeLine` — hoje também Mundo 5 ("Preveja a Saída") e Mundo 6
 /// ("Complete o Código").
 final _keywordPattern = RegExp(r'\b(if|else|for|while|return|int|bool|List|void)\b');
 

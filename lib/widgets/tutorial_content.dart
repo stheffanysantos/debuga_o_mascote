@@ -64,24 +64,41 @@ const worldTutorials = <int, List<TutorialSlide>>{
     TutorialSlide(body: 'Chegue exatamente no alvo </> para vencer a fase.'),
   ],
   2: [
-    TutorialSlide(title: 'Como jogar: Esteira de Bugs', body: 'Vamos aprender rapidinho:'),
-    TutorialSlide(body: "Os itens chegam um de cada vez. Monte blocos 'Se [cor] → Caixa' para classificar certo."),
-    TutorialSlide(body: "'Repetir 3×' repete um número fixo de vezes; 'Enquanto [cor]' repete até a cor mudar."),
-    TutorialSlide(body: 'Classifique toda a fila certinho para vencer — errar a cor é falha.'),
+    TutorialSlide(title: 'Como jogar: Resgate de Personagens', body: 'Vamos aprender rapidinho:'),
+    TutorialSlide(body: 'Pelo caminho tem personagens perdidos — Bit, Chip, Loopy e Libug estão esperando por você!'),
+    TutorialSlide(
+      body: "O bloco 'Se tiver, resgate' anda 1 casa e resgata quem estiver lá — combine com Repetir 3× pra resgatar um corredor inteiro de uma vez, sem precisar saber exatamente onde cada um está.",
+    ),
+    TutorialSlide(body: "Chegar no alvo com a quantidade errada de resgates também é falha — o painel 'Resgatados: X/Y' mostra quantos você já tem."),
   ],
   3: [
+    TutorialSlide(title: 'Como jogar: Desenho no Tabuleiro', body: 'Vamos aprender rapidinho:'),
+    TutorialSlide(body: 'Aqui o Mascote pinta cada casa por onde Andar passa — como uma Tartaruga de LOGO!'),
+    TutorialSlide(body: 'Cada fase mostra um desenho-alvo: as casas destacadas são as que precisam ficar pintadas até o fim.'),
+    TutorialSlide(body: 'Pintar uma casa fora do desenho, ou deixar alguma de fora, também é falha — o desenho precisa ficar exatamente igual.'),
+  ],
+  4: [
+    TutorialSlide(title: 'Como jogar: Decisões em Bloco', body: 'Vamos aprender rapidinho:'),
+    TutorialSlide(body: 'Cada fase dá uma lista de números e um probleminha, como "some todos os números pares".'),
+    TutorialSlide(
+      body: "Total e Contador sempre começam em 0. 'Para cada número' aplica o bloco seguinte pra lista inteira de uma vez, em vez de repetir bloco por bloco.",
+    ),
+    TutorialSlide(body: "Os blocos 'Some os pares' e 'Conte os ímpares' têm condição — um número que não bate é só ignorado, nunca é uma falha."),
+    TutorialSlide(body: 'Aperte Play e veja se o Total/Contador final bate com o que a fase pede.'),
+  ],
+  5: [
     TutorialSlide(title: 'Como jogar: Preveja a Saída', body: 'Vamos aprender rapidinho:'),
     TutorialSlide(body: 'Você vai ler um trecho de código de verdade, já pronto — sem montar nada.'),
     TutorialSlide(body: 'Depois de ler, escolha entre as opções qual é o resultado.'),
     TutorialSlide(body: "Confirme sua resposta — aqui não existe 'quase certo', só certo ou errado."),
   ],
-  4: [
+  6: [
     TutorialSlide(title: 'Como jogar: Complete o Código', body: 'Vamos aprender rapidinho:'),
     TutorialSlide(body: 'O código tem um espaço em branco no lugar de uma linha.'),
     TutorialSlide(body: 'Toque na linha, entre as opções, que completa certo o espaço em branco.'),
     TutorialSlide(body: "Confirme sua resposta — aqui não existe 'quase certo', só certo ou errado."),
   ],
-  5: [
+  7: [
     TutorialSlide(title: 'Como jogar: Modo Debug', body: 'Vamos aprender rapidinho:'),
     TutorialSlide(body: "Em 'Reordenar', toque nas linhas de código na ordem certa."),
     TutorialSlide(body: "Em 'Achar o Bug', toque na linha que tem o erro."),
@@ -90,7 +107,7 @@ const worldTutorials = <int, List<TutorialSlide>>{
 };
 
 /// Mostrada uma única vez (`Onboarding.hasSeenRecap`), quando o jogador
-/// termina a última fase pendente de um Mundo — liga os 3 mundos numa
+/// termina a última fase pendente de um Mundo — liga os 7 mundos numa
 /// progressão pedagógica clara antes de voltar para a Seleção de Mundo. Ver
 /// `.claude/memory/decisions.md`.
 const worldRecapSlides = <int, List<TutorialSlide>>{
@@ -102,26 +119,38 @@ const worldRecapSlides = <int, List<TutorialSlide>>{
   ],
   2: [
     TutorialSlide(
-      title: 'Mundo 2 completo!',
-      body: 'Você aprendeu Se e Enquanto — decisão e repetição condicional. Agora vem o mais parecido com programar de verdade: ler código!',
+      title: 'Trilha 1 completa!',
+      body: 'Você aprendeu Decisão — resgatar personagens perdidos pelo caminho. Agora vem a Trilha Construtores de Lógica: pintar desenhos no tabuleiro e montar programas que resolvem contas de verdade!',
     ),
   ],
   3: [
     TutorialSlide(
-      title: 'Trilha 1 completa!',
-      body: 'Você já lê código de verdade e prevê o resultado. Agora vem a Trilha Avançada — lá você vai completar e depurar código de verdade!',
+      title: 'Mundo 3 completo!',
+      body: 'Você já pinta o desenho exato no tabuleiro. Agora os blocos vão trabalhar com números soltos — e ganham condição, só valendo quando o número bate com uma regra!',
     ),
   ],
   4: [
     TutorialSlide(
-      title: 'Mundo 4 completo!',
-      body: 'Você já sabe completar código de verdade. Agora vem o Modo Debug — juntar tudo: reordenar e achar bugs em código real!',
+      title: 'Trilha 2 completa!',
+      body: 'Você já pensa em blocos com condição. Agora vem a Trilha Modo Programador — lá você vai ler, completar e depurar código de verdade!',
     ),
   ],
   5: [
     TutorialSlide(
-      title: 'Você terminou os 5 Mundos!',
-      body: 'Sequência, decisão, repetição, leitura, escrita e depuração de código — você já pensa como um programador!',
+      title: 'Mundo 5 completo!',
+      body: 'Você já lê código de verdade e prevê o resultado. Agora vem completar um espaço em branco num código real!',
+    ),
+  ],
+  6: [
+    TutorialSlide(
+      title: 'Mundo 6 completo!',
+      body: 'Você já sabe completar código de verdade. Agora vem o Modo Debug — juntar tudo: reordenar e achar bugs em código real!',
+    ),
+  ],
+  7: [
+    TutorialSlide(
+      title: 'Você terminou os 7 Mundos!',
+      body: 'Sequência, decisão, repetição, programação em blocos, leitura, escrita e depuração de código — você já pensa como um programador!',
     ),
   ],
 };

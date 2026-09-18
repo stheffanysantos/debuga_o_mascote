@@ -8,8 +8,8 @@ import 'complete_code_gameplay_state.dart';
 
 part 'complete_code_gameplay_view_model.g.dart';
 
-/// ViewModel da Gameplay do Mundo 4 ("Complete o Código") — mesma forma de
-/// `PredictOutputGameplayViewModel` (Mundo 3): sem passo a passo, cada
+/// ViewModel da Gameplay do Mundo 6 ("Complete o Código") — mesma forma de
+/// `PredictOutputGameplayViewModel` (Mundo 5): sem passo a passo, cada
 /// `confirm()` é um veredito único. Família por `levelId`.
 @riverpod
 class CompleteCodeGameplayViewModel extends _$CompleteCodeGameplayViewModel {
@@ -17,7 +17,7 @@ class CompleteCodeGameplayViewModel extends _$CompleteCodeGameplayViewModel {
 
   @override
   CompleteCodeGameplayState build(String levelId) {
-    final level = world4Levels.firstWhere((l) => l.id == levelId);
+    final level = world6Levels.firstWhere((l) => l.id == levelId);
     return CompleteCodeGameplayState(level: level);
   }
 

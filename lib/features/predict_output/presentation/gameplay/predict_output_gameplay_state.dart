@@ -4,7 +4,7 @@ import '../../../../models/predict_output_level.dart';
 
 part 'predict_output_gameplay_state.freezed.dart';
 
-/// Estado da Gameplay do Mundo 3 ("Preveja a Saída") — veredito único por
+/// Estado da Gameplay do Mundo 5 ("Preveja a Saída") — veredito único por
 /// tentativa (sem passo a passo/animação, diferente de Mundo 1/2): o
 /// jogador escolhe uma opção e confirma.
 @freezed

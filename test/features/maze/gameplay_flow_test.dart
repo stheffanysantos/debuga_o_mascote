@@ -25,10 +25,11 @@ Future<void> _pumpUntilFound(WidgetTester tester, Finder finder, {int maxSteps =
 
 void main() {
   testWidgets('vencer de verdade navega direto para a Vitória com os dados reais da partida', (tester) async {
-    // Tela alta o bastante para tudo (tabuleiro + comandos + Play) ficar
-    // visível sem precisar rolar — a tela real rola (ver GameplayView),
-    // mas aqui simplifica o teste a interagir sem `ensureVisible` a cada toque.
-    await tester.binding.setSurfaceSize(const Size(400, 1400));
+    // Tela alta o bastante para tudo (tabuleiro + painel "TRADUTOR DE
+    // BLOCOS" + comandos + Play) ficar visível sem precisar rolar — a tela
+    // real rola (ver GameplayView), mas aqui simplifica o teste a
+    // interagir sem `ensureVisible` a cada toque.
+    await tester.binding.setSurfaceSize(const Size(400, 1700));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final container = createTestContainer();
@@ -66,7 +67,7 @@ void main() {
   });
 
   testWidgets('bater na parede navega direto para a Falha com o motivo real', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(400, 1400));
+    await tester.binding.setSurfaceSize(const Size(400, 1700));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final container = createTestContainer();

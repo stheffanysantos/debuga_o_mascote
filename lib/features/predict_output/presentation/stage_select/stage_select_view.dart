@@ -20,9 +20,9 @@ import '../gameplay/predict_output_gameplay_view.dart';
 /// `conveyorLevelSelectRouteName`.
 const predictOutputStageSelectRouteName = 'predict-output-stage-select';
 
-/// Seleção de Fases do Mundo 3 (Preveja a Saída) — mesmo papel de
+/// Seleção de Fases do Mundo 5 (Preveja a Saída) — mesmo papel de
 /// `StageSelectView` (Mundo 1), adaptado para `PredictOutputLevel`/
-/// `world3Levels`.
+/// `world5Levels`.
 class PredictOutputStageSelectView extends ConsumerWidget {
   final GameWorld world;
 

@@ -8,13 +8,13 @@ import 'package:debuga_o_mascote/models/complete_code_level.dart';
 import '../../helpers/test_container.dart';
 
 /// Mesmo espírito de `test/screens/code_puzzle_flow_test.dart`, mas para o
-/// motor de veredito único do Mundo 4 (`CompleteCodeGameplayView` →
+/// motor de veredito único do Mundo 6 (`CompleteCodeGameplayView` →
 /// `CodePuzzleResultView`, sem passo a passo, ver
 /// `.claude/rules/testing.md`).
 void main() {
-  // Fase 1 do Mundo 4 ('world4_level1'): completa "int soma = a + b;" — a
+  // Fase 1 do Mundo 6 ('world6_level1'): completa "int soma = a + b;" — a
   // resposta certa é a opção de índice 0.
-  final level = world4Levels.firstWhere((l) => l.id == 'world4_level1');
+  final level = world6Levels.firstWhere((l) => l.id == 'world6_level1');
 
   Finder onResult(Finder finder) => find.descendant(of: find.byType(CodePuzzleResultView), matching: finder);
 

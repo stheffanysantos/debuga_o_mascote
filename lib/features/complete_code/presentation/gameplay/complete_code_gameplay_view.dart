@@ -58,14 +58,14 @@ void _onResultPrimaryAction(BuildContext context, WidgetRef ref, CompleteCodeRes
   _returnToLevelSelect(context, ref, worldNumber: data.worldNumber, worldJustCompleted: data.worldJustCompleted);
 }
 
-/// Gameplay do Mundo 4 ("Complete o Código") — mostra um trecho de código
+/// Gameplay do Mundo 6 ("Complete o Código") — mostra um trecho de código
 /// real com uma linha em branco (`CompleteCodeLevel.blankLineIndex`) e o
 /// jogador escolhe, por múltipla escolha, qual linha completa certo. A
 /// linha escolhida "aparece" na prévia do código assim que tocada (antes de
 /// confirmar), reforçando visualmente o que vai ser testado. Sem execução
 /// passo a passo — cada "Confirmar" é um veredito único, mesma família de
-/// `PredictOutputGameplayView` (Mundo 3) e `CodePuzzleGameplayView`
-/// (Mundo 5). Ver `.claude/docs/GAME_DESIGN.md`.
+/// `PredictOutputGameplayView` (Mundo 5) e `CodePuzzleGameplayView`
+/// (Mundo 7). Ver `.claude/docs/GAME_DESIGN.md`.
 class CompleteCodeGameplayView extends ConsumerWidget {
   final String levelId;
 

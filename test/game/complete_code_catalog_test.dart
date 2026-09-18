@@ -2,21 +2,21 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:debuga_o_mascote/models/complete_code_level.dart';
 
-/// Garante que toda fase de `world4Levels` (Mundo 4, "Complete o Código")
+/// Garante que toda fase de `world6Levels` (Mundo 6, "Complete o Código")
 /// tem dados consistentes — ver `.claude/reviews/checklist-level.md`. Mesmo
 /// espírito de `predict_output_catalog_test.dart`: checagem estrutural, sem
 /// motor de execução.
 void main() {
-  test('world4Levels tem 12 fases com ids únicos e estáveis', () {
-    expect(world4Levels.length, 12);
-    expect(world4Levels.map((l) => l.id).toSet().length, 12);
-    expect(world4Levels.every((l) => l.world == 4), isTrue);
-    for (var i = 0; i < world4Levels.length; i++) {
-      expect(world4Levels[i].number, i + 1);
+  test('world6Levels tem 12 fases com ids únicos e estáveis', () {
+    expect(world6Levels.length, 12);
+    expect(world6Levels.map((l) => l.id).toSet().length, 12);
+    expect(world6Levels.every((l) => l.world == 6), isTrue);
+    for (var i = 0; i < world6Levels.length; i++) {
+      expect(world6Levels[i].number, i + 1);
     }
   });
 
-  for (final level in world4Levels) {
+  for (final level in world6Levels) {
     test('${level.id} (Fase ${level.number}): dados consistentes', () {
       expect(level.code, isNotEmpty, reason: 'Fase ${level.number}: code não pode ser vazio');
       expect(
@@ -48,7 +48,7 @@ void main() {
   }
 
   test('correctOptionIndex varia entre fases (não é sempre a mesma posição)', () {
-    final indices = world4Levels.map((l) => l.correctOptionIndex).toSet();
+    final indices = world6Levels.map((l) => l.correctOptionIndex).toSet();
     expect(indices.length, greaterThan(1));
   });
 }

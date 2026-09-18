@@ -1,8 +1,8 @@
 import 'code_line.dart';
 import 'game_level.dart';
 
-/// Os 2 tipos de puzzle do Mundo 5 ("Modo Debug") — ver
-/// `.claude/docs/GAME_DESIGN.md`, seção "Mundo 5 — Modo Debug".
+/// Os 2 tipos de puzzle do Mundo 7 ("Modo Debug") — ver
+/// `.claude/docs/GAME_DESIGN.md`, seção "Mundo 7 — Modo Debug".
 enum CodePuzzleType {
   /// O jogador reordena linhas embaralhadas até bater com `correctOrder`.
   reorder,
@@ -11,7 +11,7 @@ enum CodePuzzleType {
   findBug,
 }
 
-/// Uma fase do Mundo 5 ("Modo Debug"): ou um puzzle `reorder`, ou um puzzle
+/// Uma fase do Mundo 7 ("Modo Debug"): ou um puzzle `reorder`, ou um puzzle
 /// `findBug` — nunca os dois ao mesmo tempo. Mesma forma geral de
 /// `Level`/`ConveyorLevel` (id/world/number/title), mas sem tabuleiro nem
 /// fila de itens — o "estado" da fase é o próprio trecho de código.
@@ -104,7 +104,7 @@ class CodePuzzleLevel implements GameLevel {
     );
     return CodePuzzleLevel._(
       id: id,
-      world: 5,
+      world: 7,
       number: number,
       title: title,
       type: CodePuzzleType.reorder,
@@ -132,7 +132,7 @@ class CodePuzzleLevel implements GameLevel {
     assert(bugExplanation.isNotEmpty, 'findBug precisa de bugExplanation não vazia ($id)');
     return CodePuzzleLevel._(
       id: id,
-      world: 5,
+      world: 7,
       number: number,
       title: title,
       type: CodePuzzleType.findBug,
@@ -152,14 +152,14 @@ bool _isNonDecreasing(List<int> values) {
   return true;
 }
 
-/// As 12 fases do Mundo 5 ("Modo Debug"): começa só com `reorder` (mecânica
+/// As 12 fases do Mundo 7 ("Modo Debug"): começa só com `reorder` (mecânica
 /// já conhecida de "tocar para montar" dos outros mundos) e mistura
 /// `findBug` a partir da metade, com trechos cada vez um pouco mais
 /// longos/sutis. Dados consistentes verificados em
 /// `test/game/code_puzzle_catalog_test.dart`.
-final world5Levels = <CodePuzzleLevel>[
+final world7Levels = <CodePuzzleLevel>[
   CodePuzzleLevel.reorder(
-    id: 'world5_level1',
+    id: 'world7_level1',
     number: 1,
     title: 'Primeira linha',
     correctOrder: const [
@@ -168,7 +168,7 @@ final world5Levels = <CodePuzzleLevel>[
     ],
   ),
   CodePuzzleLevel.reorder(
-    id: 'world5_level2',
+    id: 'world7_level2',
     number: 2,
     title: 'Some dois números',
     correctOrder: const [
@@ -183,7 +183,7 @@ final world5Levels = <CodePuzzleLevel>[
     groupOf: const [0, 0, 1],
   ),
   CodePuzzleLevel.reorder(
-    id: 'world5_level3',
+    id: 'world7_level3',
     number: 3,
     title: 'Uma decisão simples',
     correctOrder: const [
@@ -193,7 +193,7 @@ final world5Levels = <CodePuzzleLevel>[
     ],
   ),
   CodePuzzleLevel.reorder(
-    id: 'world5_level4',
+    id: 'world7_level4',
     number: 4,
     title: 'Se, senão',
     correctOrder: const [
@@ -205,7 +205,7 @@ final world5Levels = <CodePuzzleLevel>[
     ],
   ),
   CodePuzzleLevel.reorder(
-    id: 'world5_level5',
+    id: 'world7_level5',
     number: 5,
     title: 'Repita 3 vezes',
     correctOrder: const [
@@ -215,7 +215,7 @@ final world5Levels = <CodePuzzleLevel>[
     ],
   ),
   CodePuzzleLevel.reorder(
-    id: 'world5_level6',
+    id: 'world7_level6',
     number: 6,
     title: 'Sua primeira função',
     correctOrder: const [
@@ -225,7 +225,7 @@ final world5Levels = <CodePuzzleLevel>[
     ],
   ),
   CodePuzzleLevel.findBug(
-    id: 'world5_level7',
+    id: 'world7_level7',
     number: 7,
     title: 'Ache o bug: soma',
     codeWithBug: const [
@@ -237,7 +237,7 @@ final world5Levels = <CodePuzzleLevel>[
     bugExplanation: 'Uma função de soma deveria somar (a + b), não subtrair.',
   ),
   CodePuzzleLevel.reorder(
-    id: 'world5_level8',
+    id: 'world7_level8',
     number: 8,
     title: 'Some uma lista de números',
     correctOrder: const [
@@ -249,7 +249,7 @@ final world5Levels = <CodePuzzleLevel>[
     ],
   ),
   CodePuzzleLevel.findBug(
-    id: 'world5_level9',
+    id: 'world7_level9',
     number: 9,
     title: 'Ache o bug: laço sem fim',
     codeWithBug: const [
@@ -263,7 +263,7 @@ final world5Levels = <CodePuzzleLevel>[
     bugExplanation: 'O contador nunca aumenta (usa -1 em vez de +1) — o laço nunca termina.',
   ),
   CodePuzzleLevel.findBug(
-    id: 'world5_level10',
+    id: 'world7_level10',
     number: 10,
     title: 'Ache o bug: par ou ímpar',
     codeWithBug: const [
@@ -279,7 +279,7 @@ final world5Levels = <CodePuzzleLevel>[
     bugExplanation: "No 'else' deveria retornar false — números ímpares não são pares.",
   ),
   CodePuzzleLevel.reorder(
-    id: 'world5_level11',
+    id: 'world7_level11',
     number: 11,
     title: 'Percorra uma lista',
     correctOrder: const [
@@ -296,7 +296,7 @@ final world5Levels = <CodePuzzleLevel>[
     groupOf: const [0, 0, 1, 2, 3, 4],
   ),
   CodePuzzleLevel.findBug(
-    id: 'world5_level12',
+    id: 'world7_level12',
     number: 12,
     title: 'Ache o bug: fatorial',
     codeWithBug: const [

@@ -18,8 +18,8 @@ import '../../../widgets/star_row_widget.dart';
 import '../../../widgets/stat_card_widget.dart';
 
 /// Tela de Resultado de veredito único — reaproveitada pelos 3 mundos que
-/// não têm "quase certo" (blocos a mais, itens sobrando): Mundo 3 ("Preveja
-/// a Saída"), Mundo 4 ("Complete o Código") e Mundo 5 ("Modo Debug"). Uma
+/// não têm "quase certo" (blocos a mais, itens sobrando): Mundo 5 ("Preveja
+/// a Saída"), Mundo 6 ("Complete o Código") e Mundo 7 ("Modo Debug"). Uma
 /// tela só parametrizada por `won`, em vez de duas telas
 /// (`VictoryView`/`FailureView`) como nos mundos com "quase certo" — ver
 /// `.claude/docs/GAME_DESIGN.md`. Desacoplada de `CodePuzzleLevel`/

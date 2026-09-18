@@ -25,12 +25,15 @@ import '../../world_select/presentation/world_select_view.dart';
 /// - `_glow` (`AnimationController`, loop): pulsação suave (opacidade +
 ///   escala) do brilho decorativo do canto — antes estático.
 /// - `_stageIndex` + `_stageTimer` (`Timer.periodic`): o "palco" central
-///   revezia entre o Mascote e os 5 ícones ilustrados de Mundo
+///   revezia entre o Mascote e os 7 ícones ilustrados de Mundo
 ///   (`assets/images/world{N}_icon.png`), um de cada vez — o atual
 ///   desaparece e o próximo aparece (`AnimatedSwitcher` com fade), de tempos
-///   em tempos. O ícone do Mundo 5 (fixo, não revezando) também aparece bem
-///   esmaecido dentro do brilho decorativo do canto (`_stageContent`,
-///   reaproveitado nos 2 lugares) — pedido explícito do usuário.
+///   em tempos. O ícone do Mundo 7 ("Modo Debug", o mundo mais avançado —
+///   fixo, não revezando) também aparece bem esmaecido dentro do brilho
+///   decorativo do canto (`_stageContent`, reaproveitado nos 2 lugares) —
+///   pedido explícito do usuário; índice atualizado na renumeração de
+///   2026-09-18 (era Mundo 5 antes de "Programação em Blocos" entrar como
+///   Mundos 3/4).
 ///
 /// O título "DEBUGA O MASCOTE" não faz parte do palco (fazia parte numa
 /// rodada anterior) — pedido explícito do usuário: é um elemento fixo,
@@ -49,9 +52,9 @@ class _SplashViewState extends ConsumerState<SplashView> with TickerProviderStat
   Timer? _stageTimer;
   int _stageIndex = 0;
 
-  static final _worldIconAssets = List.generate(5, (i) => 'assets/images/world${i + 1}_icon.png');
+  static final _worldIconAssets = List.generate(7, (i) => 'assets/images/world${i + 1}_icon.png');
 
-  // Mascote (1) + 5 ícones de Mundo — cada um ocupa o palco por vez, em loop.
+  // Mascote (1) + 7 ícones de Mundo — cada um ocupa o palco por vez, em loop.
   static final _stageCount = 1 + _worldIconAssets.length;
   static const _stageDuration = Duration(seconds: 3);
 
@@ -138,7 +141,7 @@ class _SplashViewState extends ConsumerState<SplashView> with TickerProviderStat
                     child: ClipOval(
                       child: Opacity(
                         opacity: 0.3,
-                        child: _stageContent(5, glowSize),
+                        child: _stageContent(7, glowSize),
                       ),
                     ),
                   ),
@@ -260,7 +263,7 @@ class _SplashViewState extends ConsumerState<SplashView> with TickerProviderStat
     );
   }
 
-  /// Um "slide" do palco central — índice `0` é o Mascote, `1..5` são os 5
+  /// Um "slide" do palco central — índice `0` é o Mascote, `1..7` são os 7
   /// ícones de Mundo (`_worldIconAssets`). Cada um recebe `boxSize` (o
   /// quadrado reservado pelo `Expanded`) pra se dimensionar. Sem moldura
   /// circular por baixo (tinha antes — pedido explícito do usuário pra

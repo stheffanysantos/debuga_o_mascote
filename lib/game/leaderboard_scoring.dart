@@ -3,9 +3,16 @@
 /// `.claude/docs/GAME_DESIGN.md`, seção "Placar do Dia — pontuação de
 /// sessão". O tempo gasto nunca aparece na UI — só entra aqui, como um
 /// bônus escondido dentro do total de pontos.
-const _basePointsByWorld = {1: 300, 2: 450, 3: 600, 4: 750, 5: 900};
+///
+/// Valores reduzidos em ~10× (2026-09-18) — achado real: jogadores que
+/// zeraram o jogo (84 fases, 7 mundos) acumulavam 46.000-47.000+ pontos de
+/// sessão, um número grande demais para o placar de um jogo de estande.
+/// Mesmo espírito da redução já aplicada antes ao "PONTOS" por fase
+/// (`.claude/memory/decisions.md`, "Pontuação por fase reduzida
+/// (1000→300)") — só os valores mudam, a fórmula em si continua igual.
+const _basePointsByWorld = {1: 30, 2: 40, 3: 50, 4: 60, 5: 70, 6: 80, 7: 90};
 
-const _speedBonusCap = 200;
+const _speedBonusCap = 20;
 
 int computeSessionPoints({required int worldNumber, required int elapsedSeconds}) {
   final base = _basePointsByWorld[worldNumber] ?? 300;

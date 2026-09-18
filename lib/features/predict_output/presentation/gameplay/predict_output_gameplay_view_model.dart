@@ -8,7 +8,7 @@ import 'predict_output_gameplay_state.dart';
 
 part 'predict_output_gameplay_view_model.g.dart';
 
-/// ViewModel da Gameplay do Mundo 3 ("Preveja a Saída") — sem passo a passo
+/// ViewModel da Gameplay do Mundo 5 ("Preveja a Saída") — sem passo a passo
 /// (diferente de `GameplayViewModel`/`ConveyorGameplayViewModel`): cada
 /// `confirm()` é um veredito único, calculado na hora a partir da opção
 /// escolhida. Família por `levelId`.
@@ -20,7 +20,7 @@ class PredictOutputGameplayViewModel extends _$PredictOutputGameplayViewModel {
 
   @override
   PredictOutputGameplayState build(String levelId) {
-    final level = world3Levels.firstWhere((l) => l.id == levelId);
+    final level = world5Levels.firstWhere((l) => l.id == levelId);
     return PredictOutputGameplayState(level: level);
   }
 

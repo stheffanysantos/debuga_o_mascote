@@ -32,6 +32,16 @@ class GameplayViewModel extends _$GameplayViewModel {
   final Stopwatch _levelStopwatch = Stopwatch()..start();
 
   static const _stepDuration = Duration(milliseconds: 460);
+
+  /// Flash mais curto para o bloco condicional de resgate
+  /// (`rescueIfCharacterHere`) quando ele anda mas não resgata ninguém — a
+  /// casa de destino não tinha personagem (ou já tinha sido resgatada
+  /// antes). Sem isso, esse bloco ficava destacado pela mesma duração de um
+  /// passo que resgatou de verdade, sem nenhum sinal de "andei e não tinha
+  /// ninguém aqui" (mesmo achado do UX Reviewer já aplicado à antiga Placa
+  /// e ao Mundo 4). Ver `.claude/memory/decisions.md`, entrada de
+  /// 2026-09-18.
+  static const _noEffectFlashDuration = Duration(milliseconds: 250);
   static const _startDelay = Duration(milliseconds: 200);
 
   /// Pausa curta depois do último passo (vitória ou falha) antes de navegar
@@ -41,7 +51,11 @@ class GameplayViewModel extends _$GameplayViewModel {
   @override
   GameplayState build(String levelId) {
     ref.onDispose(() => _disposed = true);
-    final level = world1Levels.firstWhere((l) => l.id == levelId);
+    // Os Mundos 1 ("Primeiros passos"), 2 ("Resgate de Personagens") e 3
+    // ("Desenho no Tabuleiro") compartilham este motor/`Level` (todos
+    // `WorldGameType.maze`) — ver `.claude/memory/decisions.md`, entrada de
+    // 2026-09-18.
+    final level = [...world1Levels, ...world2Levels, ...world3Levels].firstWhere((l) => l.id == levelId);
     _executor = ProgramExecutor(level);
     return GameplayState(level: level, cursor: GameCursor.fromStart(level));
   }
@@ -82,8 +96,17 @@ class GameplayViewModel extends _$GameplayViewModel {
 
     for (final step in steps) {
       if (_disposed) return;
-      final outcome = _executor.applyStep(state.cursor, step.type);
-      if (step.type == BlockType.walk) {
+      final cursorBefore = state.cursor;
+      final outcome = _executor.applyStep(cursorBefore, step.type);
+      final isRescueBlock = step.type == BlockType.rescueIfCharacterHere;
+      // Bloco condicional de resgate: sempre move o cursor (mesma regra de
+      // colisão de `walk`) — só "resgatou de verdade" se a contagem de
+      // personagens mudou; senão a casa de destino não tinha personagem
+      // (ou já tinha sido resgatado antes nesta Execução). Nunca é falha
+      // (ver `ProgramExecutor.applyStep`).
+      final rescueHappened = isRescueBlock && outcome.cursor.collectedCount != cursorBefore.collectedCount;
+
+      if (step.type == BlockType.walk || isRescueBlock) {
         ref.read(appSoundsProvider).walk();
       } else if (step.type == BlockType.turnLeft || step.type == BlockType.turnRight) {
         ref.read(appSoundsProvider).turn();
@@ -96,7 +119,8 @@ class GameplayViewModel extends _$GameplayViewModel {
       }
 
       state = state.copyWith(cursor: outcome.cursor, currentStepBlockIndex: step.blockIndex);
-      await Future.delayed(_stepDuration);
+      final wasNoOp = isRescueBlock && !rescueHappened;
+      await Future.delayed(wasNoOp ? _noEffectFlashDuration : _stepDuration);
     }
 
     if (_disposed) return;
@@ -111,6 +135,17 @@ class GameplayViewModel extends _$GameplayViewModel {
   Future<void> _resolveOutcome(GameOutcome outcome) async {
     await Future.delayed(_resultPause);
     if (_disposed) return;
+
+    // Captura os valores finais ANTES de resetar o cursor abaixo — só
+    // Mundo 2 ("Resgate de Personagens") usa `collectedCount`/
+    // `collectTarget`, só Mundo 3 ("Desenho no Tabuleiro") usa a diferença
+    // entre `paintedTiles`/`paintTarget` — capturar sempre é inofensivo
+    // (fica 0/null nos outros mundos).
+    final collectedCount = state.cursor.collectedCount;
+    final collectTarget = state.level.collectTarget;
+    final paintTarget = state.level.paintTarget;
+    final missingPaintCount = paintTarget == null ? 0 : paintTarget.difference(state.cursor.paintedTiles).length;
+    final extraPaintCount = paintTarget == null ? 0 : state.cursor.paintedTiles.difference(paintTarget).length;
 
     // Deixa o tabuleiro pronto para a próxima tentativa (mascote de volta ao
     // início) para quando o jogador voltar via "Tentar de novo".
@@ -154,6 +189,10 @@ class GameplayViewModel extends _$GameplayViewModel {
             attempt: state.attempts,
             outcome: outcome,
             maxBlocks: state.level.maxBlocks,
+            collectedCount: collectedCount,
+            collectTarget: collectTarget,
+            missingPaintCount: missingPaintCount,
+            extraPaintCount: extraPaintCount,
           ),
         ),
       );

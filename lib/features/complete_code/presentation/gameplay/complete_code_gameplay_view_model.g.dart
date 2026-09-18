@@ -7,7 +7,7 @@ part of 'complete_code_gameplay_view_model.dart';
 // **************************************************************************
 
 String _$completeCodeGameplayViewModelHash() =>
-    r'20a505e5ac7aa614d5051a0461ba8082560ec61a';
+    r'a9cefa2db8e998f804cab3f1df35c728ea08e598';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -37,8 +37,8 @@ abstract class _$CompleteCodeGameplayViewModel
   CompleteCodeGameplayState build(String levelId);
 }
 
-/// ViewModel da Gameplay do Mundo 4 ("Complete o Código") — mesma forma de
-/// `PredictOutputGameplayViewModel` (Mundo 3): sem passo a passo, cada
+/// ViewModel da Gameplay do Mundo 6 ("Complete o Código") — mesma forma de
+/// `PredictOutputGameplayViewModel` (Mundo 5): sem passo a passo, cada
 /// `confirm()` é um veredito único. Família por `levelId`.
 ///
 /// Copied from [CompleteCodeGameplayViewModel].
@@ -46,22 +46,22 @@ abstract class _$CompleteCodeGameplayViewModel
 const completeCodeGameplayViewModelProvider =
     CompleteCodeGameplayViewModelFamily();
 
-/// ViewModel da Gameplay do Mundo 4 ("Complete o Código") — mesma forma de
-/// `PredictOutputGameplayViewModel` (Mundo 3): sem passo a passo, cada
+/// ViewModel da Gameplay do Mundo 6 ("Complete o Código") — mesma forma de
+/// `PredictOutputGameplayViewModel` (Mundo 5): sem passo a passo, cada
 /// `confirm()` é um veredito único. Família por `levelId`.
 ///
 /// Copied from [CompleteCodeGameplayViewModel].
 class CompleteCodeGameplayViewModelFamily
     extends Family<CompleteCodeGameplayState> {
-  /// ViewModel da Gameplay do Mundo 4 ("Complete o Código") — mesma forma de
-  /// `PredictOutputGameplayViewModel` (Mundo 3): sem passo a passo, cada
+  /// ViewModel da Gameplay do Mundo 6 ("Complete o Código") — mesma forma de
+  /// `PredictOutputGameplayViewModel` (Mundo 5): sem passo a passo, cada
   /// `confirm()` é um veredito único. Família por `levelId`.
   ///
   /// Copied from [CompleteCodeGameplayViewModel].
   const CompleteCodeGameplayViewModelFamily();
 
-  /// ViewModel da Gameplay do Mundo 4 ("Complete o Código") — mesma forma de
-  /// `PredictOutputGameplayViewModel` (Mundo 3): sem passo a passo, cada
+  /// ViewModel da Gameplay do Mundo 6 ("Complete o Código") — mesma forma de
+  /// `PredictOutputGameplayViewModel` (Mundo 5): sem passo a passo, cada
   /// `confirm()` é um veredito único. Família por `levelId`.
   ///
   /// Copied from [CompleteCodeGameplayViewModel].
@@ -91,8 +91,8 @@ class CompleteCodeGameplayViewModelFamily
   String? get name => r'completeCodeGameplayViewModelProvider';
 }
 
-/// ViewModel da Gameplay do Mundo 4 ("Complete o Código") — mesma forma de
-/// `PredictOutputGameplayViewModel` (Mundo 3): sem passo a passo, cada
+/// ViewModel da Gameplay do Mundo 6 ("Complete o Código") — mesma forma de
+/// `PredictOutputGameplayViewModel` (Mundo 5): sem passo a passo, cada
 /// `confirm()` é um veredito único. Família por `levelId`.
 ///
 /// Copied from [CompleteCodeGameplayViewModel].
@@ -102,8 +102,8 @@ class CompleteCodeGameplayViewModelProvider
           CompleteCodeGameplayViewModel,
           CompleteCodeGameplayState
         > {
-  /// ViewModel da Gameplay do Mundo 4 ("Complete o Código") — mesma forma de
-  /// `PredictOutputGameplayViewModel` (Mundo 3): sem passo a passo, cada
+  /// ViewModel da Gameplay do Mundo 6 ("Complete o Código") — mesma forma de
+  /// `PredictOutputGameplayViewModel` (Mundo 5): sem passo a passo, cada
   /// `confirm()` é um veredito único. Família por `levelId`.
   ///
   /// Copied from [CompleteCodeGameplayViewModel].

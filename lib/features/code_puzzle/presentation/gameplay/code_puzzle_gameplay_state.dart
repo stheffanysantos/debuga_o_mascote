@@ -5,7 +5,7 @@ import '../../../../models/code_puzzle_level.dart';
 
 part 'code_puzzle_gameplay_state.freezed.dart';
 
-/// Estado da Gameplay do Mundo 5 ("Modo Debug") — veredito único por
+/// Estado da Gameplay do Mundo 7 ("Modo Debug") — veredito único por
 /// tentativa (sem passo a passo), alternando entre `reorder`/`findBug`
 /// conforme `level.type`.
 @freezed

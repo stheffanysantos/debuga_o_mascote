@@ -2,23 +2,23 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:debuga_o_mascote/models/predict_output_level.dart';
 
-/// Garante que toda fase de `world3Levels` (Mundo 3, "Preveja a Saída") tem
+/// Garante que toda fase de `world5Levels` (Mundo 5, "Preveja a Saída") tem
 /// dados consistentes — ver `.claude/reviews/checklist-level.md`. Como não
 /// existe um motor de execução aqui (a "resposta certa" é um dado fixo do
 /// modelo, não algo derivado de rodar o código), a checagem é estrutural:
 /// índice de opção certa dentro dos limites, sem opções vazias, e nenhum
 /// texto duplicado dentro da mesma fase.
 void main() {
-  test('world3Levels tem 12 fases com ids únicos e estáveis', () {
-    expect(world3Levels.length, 12);
-    expect(world3Levels.map((l) => l.id).toSet().length, 12);
-    expect(world3Levels.every((l) => l.world == 3), isTrue);
-    for (var i = 0; i < world3Levels.length; i++) {
-      expect(world3Levels[i].number, i + 1);
+  test('world5Levels tem 12 fases com ids únicos e estáveis', () {
+    expect(world5Levels.length, 12);
+    expect(world5Levels.map((l) => l.id).toSet().length, 12);
+    expect(world5Levels.every((l) => l.world == 5), isTrue);
+    for (var i = 0; i < world5Levels.length; i++) {
+      expect(world5Levels[i].number, i + 1);
     }
   });
 
-  for (final level in world3Levels) {
+  for (final level in world5Levels) {
     test('${level.id} (Fase ${level.number}): dados consistentes', () {
       expect(level.code, isNotEmpty, reason: 'Fase ${level.number}: code não pode ser vazio');
       expect(level.question, isNotEmpty, reason: 'Fase ${level.number}: question não pode ser vazia');
@@ -34,7 +34,7 @@ void main() {
   }
 
   test('correctOptionIndex varia entre fases (não é sempre a mesma posição)', () {
-    final indices = world3Levels.map((l) => l.correctOptionIndex).toSet();
+    final indices = world5Levels.map((l) => l.correctOptionIndex).toSet();
     expect(indices.length, greaterThan(1));
   });
 }

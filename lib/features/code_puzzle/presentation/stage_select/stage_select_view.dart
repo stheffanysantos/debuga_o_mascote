@@ -20,9 +20,9 @@ import '../gameplay/code_puzzle_gameplay_view.dart';
 /// `conveyorLevelSelectRouteName`.
 const codePuzzleStageSelectRouteName = 'code-puzzle-stage-select';
 
-/// Seleção de Fases do Mundo 5 (Modo Debug) — mesmo papel de
+/// Seleção de Fases do Mundo 7 (Modo Debug) — mesmo papel de
 /// `StageSelectView` (Mundo 1), adaptado para `CodePuzzleLevel`/
-/// `world5Levels`.
+/// `world7Levels`.
 class CodePuzzleStageSelectView extends ConsumerWidget {
   final GameWorld world;
 

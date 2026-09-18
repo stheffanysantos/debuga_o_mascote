@@ -8,13 +8,13 @@ import 'package:debuga_o_mascote/models/predict_output_level.dart';
 import '../../helpers/test_container.dart';
 
 /// Mesmo espírito de `test/screens/code_puzzle_flow_test.dart`, mas para o
-/// motor de veredito único do Mundo 3 (`PredictOutputGameplayView` →
+/// motor de veredito único do Mundo 5 (`PredictOutputGameplayView` →
 /// `CodePuzzleResultView`, sem passo a passo, ver
 /// `.claude/rules/testing.md`).
 void main() {
-  // Fase 1 do Mundo 3 ('world3_level1'): "int x = 4; print(x + 1);" — a
+  // Fase 1 do Mundo 5 ('world5_level1'): "int x = 4; print(x + 1);" — a
   // resposta certa é a opção de índice 0 ("5").
-  final level = world3Levels.firstWhere((l) => l.id == 'world3_level1');
+  final level = world5Levels.firstWhere((l) => l.id == 'world5_level1');
 
   Finder onResult(Finder finder) => find.descendant(of: find.byType(CodePuzzleResultView), matching: finder);
 

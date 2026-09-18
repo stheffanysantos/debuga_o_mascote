@@ -11,19 +11,19 @@ void main() {
     expect(world2, lessThan(world3));
   });
 
-  test('resolver rápido rende bônus de até 200 pontos', () {
+  test('resolver rápido rende bônus de até 20 pontos', () {
     final instant = computeSessionPoints(worldNumber: 1, elapsedSeconds: 0);
     final slow = computeSessionPoints(worldNumber: 1, elapsedSeconds: 500);
-    expect(instant - slow, 200);
+    expect(instant - slow, 20);
   });
 
   test('bônus nunca fica negativo mesmo demorando muito', () {
     final points = computeSessionPoints(worldNumber: 1, elapsedSeconds: 100000);
-    expect(points, 300); // só o base do Mundo 1, sem bônus
+    expect(points, 30); // só o base do Mundo 1, sem bônus
   });
 
   test('mundo desconhecido cai no base do Mundo 1, por segurança', () {
     final points = computeSessionPoints(worldNumber: 99, elapsedSeconds: 100000);
-    expect(points, 300);
+    expect(points, 30);
   });
 }
