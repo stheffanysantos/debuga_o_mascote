@@ -15,11 +15,13 @@ import '../../../theme/app_icons.dart';
 /// Tela de "Configuração de Usuário" aberta pelo lápis em `SettingsView` —
 /// edita o nome de exibição (`ProgressState.username`, mostrado no Placar
 /// Geral no lugar do nome da conta quando preenchido) e a foto de perfil
-/// (`ProgressState.avatarId`, um carrossel de `CharacterAvatar` — pedido
-/// explícito do usuário). Só 2 personagens hoje (Lili, Libug — as únicas
-/// artes prontas); o usuário vai enviar mais imagens de personagem depois,
-/// bastando adicionar em `characterAvatars` (`lib/models/character_avatar.dart`)
-/// sem tocar nesta tela. Ver `.claude/memory/decisions.md`.
+/// (`ProgressState.avatarId`, um seletor de `CharacterAvatar` — pedido
+/// explícito do usuário). 5 personagens hoje (Lili, Libug + 3 novos); mais
+/// opções futuras bastam um item a mais em `characterAvatars`
+/// (`lib/models/character_avatar.dart`) sem tocar nesta tela. `Wrap` (não
+/// `ListView` horizontal) — os avatares quebram em quantas linhas forem
+/// necessárias em vez de só rolar pro lado, então uma lista maior nunca fica
+/// "escondida" fora da tela. Ver `.claude/memory/decisions.md`.
 class ProfileEditView extends ConsumerStatefulWidget {
   const ProfileEditView({super.key});
 
@@ -88,18 +90,23 @@ class _ProfileEditViewState extends ConsumerState<ProfileEditView> {
                       const SizedBox(height: 28),
                       Text('Escolha seu personagem', style: AppText.style(size: 13, weight: FontWeight.w900, color: AppColors.lilac)),
                       const SizedBox(height: 12),
-                      SizedBox(
-                        height: 116,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: characterAvatars.length,
-                          separatorBuilder: (context, index) => const SizedBox(width: 16),
-                          itemBuilder: (context, index) => _AvatarOption(
-                            avatar: characterAvatars[index],
-                            selected: characterAvatars[index].id == _selectedAvatarId,
-                            onTap: () => setState(() => _selectedAvatarId = characterAvatars[index].id),
-                          ),
-                        ),
+                      // `Wrap`, não `ListView` horizontal — cada avatar tem
+                      // largura fixa (`_AvatarOption`, 84px), então quantos
+                      // couberem numa linha ficam numa linha, e o resto
+                      // quebra pra linha(s) de baixo automaticamente (achado
+                      // do usuário: uma lista só-horizontal escondia os
+                      // avatares que não cabiam na largura da tela).
+                      Wrap(
+                        spacing: 16,
+                        runSpacing: 16,
+                        children: [
+                          for (final avatar in characterAvatars)
+                            _AvatarOption(
+                              avatar: avatar,
+                              selected: avatar.id == _selectedAvatarId,
+                              onTap: () => setState(() => _selectedAvatarId = avatar.id),
+                            ),
+                        ],
                       ),
                     ],
                   ),
