@@ -34,7 +34,7 @@ mixin _$ProgressState {
   int? get surveyAge => throw _privateConstructorUsedError;
   bool? get surveyHasProgrammedBefore => throw _privateConstructorUsedError;
 
-  /// `true` depois que o jogador completa 100% das fases dos 5 Mundos
+  /// `true` depois que o jogador completa 100% das fases dos 7 Mundos
   /// (`isGameCompleted`) — usado pra tirá-lo do Placar Geral e colocá-lo na
   /// lista separada de quem zerou o jogo (`LeaderboardEntry.gameCompleted`,
   /// ver `.claude/memory/decisions.md`).
@@ -285,7 +285,7 @@ class _$ProgressStateImpl extends _ProgressState {
   @override
   final bool? surveyHasProgrammedBefore;
 
-  /// `true` depois que o jogador completa 100% das fases dos 5 Mundos
+  /// `true` depois que o jogador completa 100% das fases dos 7 Mundos
   /// (`isGameCompleted`) — usado pra tirá-lo do Placar Geral e colocá-lo na
   /// lista separada de quem zerou o jogo (`LeaderboardEntry.gameCompleted`,
   /// ver `.claude/memory/decisions.md`).
@@ -407,7 +407,7 @@ abstract class _ProgressState extends ProgressState {
   @override
   bool? get surveyHasProgrammedBefore;
 
-  /// `true` depois que o jogador completa 100% das fases dos 5 Mundos
+  /// `true` depois que o jogador completa 100% das fases dos 7 Mundos
   /// (`isGameCompleted`) — usado pra tirá-lo do Placar Geral e colocá-lo na
   /// lista separada de quem zerou o jogo (`LeaderboardEntry.gameCompleted`,
   /// ver `.claude/memory/decisions.md`).

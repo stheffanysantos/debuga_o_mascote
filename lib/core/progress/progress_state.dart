@@ -29,7 +29,7 @@ class ProgressState with _$ProgressState {
     int? surveyAge,
     bool? surveyHasProgrammedBefore,
 
-    /// `true` depois que o jogador completa 100% das fases dos 5 Mundos
+    /// `true` depois que o jogador completa 100% das fases dos 7 Mundos
     /// (`isGameCompleted`) — usado pra tirá-lo do Placar Geral e colocá-lo na
     /// lista separada de quem zerou o jogo (`LeaderboardEntry.gameCompleted`,
     /// ver `.claude/memory/decisions.md`).

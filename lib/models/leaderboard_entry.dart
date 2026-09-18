@@ -8,7 +8,7 @@ import 'character_avatar.dart';
 /// — ficam guardados só para quem organiza o estande olhar depois.
 ///
 /// Placar **sem recorte de dia** — pedido explícito do usuário: quem "zera o
-/// jogo" (100% das fases dos 5 Mundos) sai do Placar Geral e passa a
+/// jogo" (100% das fases dos 7 Mundos) sai do Placar Geral e passa a
 /// aparecer só na lista separada de quem zerou (`gameCompleted: true`).
 class LeaderboardEntry {
   final String name;
@@ -23,7 +23,7 @@ class LeaderboardEntry {
   /// no avatar padrão do jogo (`defaultAvatarId`), nunca quebram.
   final String avatarId;
 
-  /// `true` depois que o jogador completa 100% das fases dos 5 Mundos
+  /// `true` depois que o jogador completa 100% das fases dos 7 Mundos
   /// (`ProgressState.gameCompleted`) — nesse ponto ele sai do Placar Geral e
   /// passa a aparecer só na lista de quem zerou.
   final bool gameCompleted;
